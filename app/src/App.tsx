@@ -7,9 +7,9 @@ type FontOption = {
 }
 
 const FONT_OPTIONS: FontOption[] = [
-  { label: 'Poppins', className: 'font-[\'Poppins\']' },
-  { label: 'Playfair Display', className: 'font-[\'Playfair Display\']' },
-  { label: 'Pacifico', className: 'font-[\'Pacifico\']' },
+  { label: 'Poppins', className: 'font-poppins' },
+  { label: 'Playfair Display', className: 'font-playfair' },
+  { label: 'Pacifico', className: 'font-pacifico' },
 ]
 
 const COLOR_OPTIONS = [
