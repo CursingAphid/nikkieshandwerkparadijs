@@ -105,9 +105,12 @@ async function getDominantColorFromImage(imgUrl: string): Promise<string> {
     if (!best || v.count > best.count) best = v
   })
   if (!best || best.count === 0) return '#c2410c' // fallback amber-ish
-  const r = Math.round((best as DominantBin).r / (best as DominantBin).count)
-  const g = Math.round((best as DominantBin).g / (best as DominantBin).count)
-  const b = Math.round((best as DominantBin).b / (best as DominantBin).count)
+  
+  // TypeScript now knows best is not null
+  const bestBin = best
+  const r = Math.round(bestBin.r / bestBin.count)
+  const g = Math.round(bestBin.g / bestBin.count)
+  const b = Math.round(bestBin.b / bestBin.count)
   return rgbToHex(r, g, b)
 }
 
