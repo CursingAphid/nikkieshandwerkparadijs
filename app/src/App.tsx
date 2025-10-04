@@ -100,14 +100,20 @@ async function getDominantColorFromImage(imgUrl: string): Promise<string> {
     cur.b += b
     bins.set(key, cur)
   }
-  let best: DominantBin | null = null
-  bins.forEach((v) => {
-    if (!best || v.count > best.count) best = v
-  })
-  if (!best || best.count === 0) return '#c2410c' // fallback amber-ish
   
-  // Explicitly cast to DominantBin since we know it's not null
-  const bestBin = best as DominantBin
+  // Find the bin with the highest count
+  let maxCount = 0
+  let bestBin: DominantBin = { count: 0, r: 0, g: 0, b: 0 }
+  
+  bins.forEach((bin) => {
+    if (bin.count > maxCount) {
+      maxCount = bin.count
+      bestBin = bin
+    }
+  })
+  
+  if (bestBin.count === 0) return '#c2410c' // fallback amber-ish
+  
   const r = Math.round(bestBin.r / bestBin.count)
   const g = Math.round(bestBin.g / bestBin.count)
   const b = Math.round(bestBin.b / bestBin.count)
