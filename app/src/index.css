@@ -51,7 +51,12 @@ body {
   }
 }
 
-@media (max-width: 1023px) {
+@media (max-width: 425px) {
+  .container {
+    padding: 0px !important;
+    margin: 0 !important;
+  }
+  
   .grid {
     grid-template-columns: 1fr;
     gap: 16px;
@@ -60,6 +65,8 @@ body {
   .card {
     width: 100%;
     margin: 0;
+    padding: 12px;
+    border-radius: 0;
   }
 }
 
