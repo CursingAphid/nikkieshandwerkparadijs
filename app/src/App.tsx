@@ -60,10 +60,10 @@ function isRedPixel(r: number, g: number, b: number): boolean {
 
 function isGreenPixel(r: number, g: number, b: number): boolean {
   const { h, s, v } = computeHueSaturation(r, g, b)
-  // Narrower green hue range to be more selective (100-140 degrees)
-  const greenHue = h >= 100 && h <= 140
-  // Higher thresholds to target darker, more saturated green pixels
-  return greenHue && s >= 0.5 && v >= 0.3
+  // Broader green hue range to catch more green pixels (90-150 degrees)
+  const greenHue = h >= 90 && h <= 150
+  // Lower thresholds to catch lighter/smaller green areas
+  return greenHue && s >= 0.3 && v >= 0.2
 }
 
 type DominantBin = { count: number; r: number; g: number; b: number }
@@ -105,9 +105,9 @@ async function getDominantColorFromImage(imgUrl: string): Promise<string> {
     if (!best || v.count > best.count) best = v
   })
   if (!best || best.count === 0) return '#c2410c' // fallback amber-ish
-  const r = Math.round(best.r / best.count)
-  const g = Math.round(best.g / best.count)
-  const b = Math.round(best.b / best.count)
+  const r = Math.round((best as DominantBin).r / (best as DominantBin).count)
+  const g = Math.round((best as DominantBin).g / (best as DominantBin).count)
+  const b = Math.round((best as DominantBin).b / (best as DominantBin).count)
   return rgbToHex(r, g, b)
 }
 
@@ -171,10 +171,8 @@ async function recolorArmGreenToColor(armUrl: string, targetHex: string): Promis
   const tg = (bigint >> 8) & 255
   const tb = bigint & 255
   
-  // Compute target HSV and luminance for the new color
+  // Compute target HSV for the new color
   const targetHSV = computeHueSaturation(tr, tg, tb)
-  const targetLumV = Math.max(tr, tg, tb) / 255
-  const isApproxGrayTarget = Math.abs(tr - tg) < 8 && Math.abs(tg - tb) < 8 && Math.abs(tr - tb) < 8
   
   for (let i = 0; i < data.length; i += 4) {
     const a = data[i + 3]
@@ -228,7 +226,7 @@ function App() {
   const [color, setColor] = useState(COLOR_OPTIONS[3])
   const [pattern, setPattern] = useState<string | null>(null)
   const [processedTowel, setProcessedTowel] = useState<string | null>(null)
-  const [computedFontSize, setComputedFontSize] = useState<number>(48)
+  const [, setComputedFontSize] = useState<number>(48)
   const [headSrc, setHeadSrc] = useState<string | null>(null)
   const [processedHead, setProcessedHead] = useState<string | null>(null)
 
