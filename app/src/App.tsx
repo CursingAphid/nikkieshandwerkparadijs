@@ -106,8 +106,8 @@ async function getDominantColorFromImage(imgUrl: string): Promise<string> {
   })
   if (!best || best.count === 0) return '#c2410c' // fallback amber-ish
   
-  // TypeScript now knows best is not null
-  const bestBin = best
+  // Explicitly cast to DominantBin since we know it's not null
+  const bestBin = best as DominantBin
   const r = Math.round(bestBin.r / bestBin.count)
   const g = Math.round(bestBin.g / bestBin.count)
   const b = Math.round(bestBin.b / bestBin.count)
