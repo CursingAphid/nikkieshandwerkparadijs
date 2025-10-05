@@ -2,7 +2,7 @@ const BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
 
 export function apiUrl(path: string): string {
   const p = path.startsWith('/') ? path : `/${path}`
-  if (!BASE) return `/api${p}`
+  if (!BASE) return `https://nikkieshandwerkparadijs-backend.vercel.app/api${p}`
   return `${BASE}${p}`
 }
 
