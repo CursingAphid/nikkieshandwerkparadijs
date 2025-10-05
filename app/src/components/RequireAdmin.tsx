@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { apiFetch } from '../lib/api'
 
 type Props = { children: ReactNode }
 
@@ -12,7 +13,7 @@ function RequireAdmin({ children }: Props) {
     let cancelled = false
     async function check() {
       try {
-        const res = await fetch('/api/admin/me')
+        const res = await apiFetch('/admin/me')
         const json = await res.json()
         if (cancelled) return
         if (json?.authed) setAuthed(true)
