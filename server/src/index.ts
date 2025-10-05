@@ -47,10 +47,13 @@ app.post('/api/admin/login', (req, res) => {
     return;
   }
   if (username === expectedUser && password === expectedPass) {
+    // Cross-site cookie for separate frontend/backend domains requires SameSite=None; Secure
+    const isProd = process.env.NODE_ENV === 'production';
+    const sameSite: 'lax' | 'none' = FRONTEND_ORIGIN ? 'none' : 'lax';
     res.cookie('admin', '1', {
       httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
+      sameSite,
+      secure: isProd,
       signed: true,
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: '/',
