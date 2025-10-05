@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
+import { apiFetch, apiUrl } from '../lib/api'
 
 type Item = {
   id: string
@@ -25,7 +26,7 @@ function EditItem() {
     let cancelled = false
     async function load() {
       try {
-        const res = await fetch(`/api/items/${id}`)
+        const res = await apiFetch(`/items/${id}`)
         const json = await res.json()
         if (!res.ok) throw new Error(json?.error || 'Failed to load item')
         if (cancelled) return
@@ -53,7 +54,7 @@ function EditItem() {
       form.append('description', description)
       form.append('price', price)
       for (const f of newImages) form.append('images', f)
-      const res = await fetch(`/api/items/${id}`, { method: 'PATCH', body: form })
+      const res = await fetch(apiUrl(`/items/${id}`), { method: 'PATCH', body: form, credentials: 'include' })
       const json = await res.json()
       if (!res.ok) throw new Error(json?.error || 'Update failed')
       setItem(json)

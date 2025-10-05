@@ -1,3 +1,4 @@
+import { apiUrl } from '../lib/api'
 import { useState } from 'react'
 
 function NewItem() {
@@ -21,7 +22,7 @@ function NewItem() {
       form.append('description', description)
       form.append('price', price)
       for (const f of images) form.append('images', f)
-      const res = await fetch('/api/items', { method: 'POST', body: form })
+      const res = await fetch(apiUrl('/items'), { method: 'POST', body: form, credentials: 'include' })
       const json = await res.json()
       if (!res.ok) { setError(json?.error || 'Create failed'); return }
       setCreated(json)

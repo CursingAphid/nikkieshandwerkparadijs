@@ -1,3 +1,4 @@
+import { apiUrl } from '../lib/api'
 import { useState } from 'react'
 
 function Upload() {
@@ -15,7 +16,7 @@ function Upload() {
       setUploading(true)
       const form = new FormData()
       form.append('file', file)
-      const res = await fetch('/api/upload', { method: 'POST', body: form })
+      const res = await fetch(apiUrl('/upload'), { method: 'POST', body: form, credentials: 'include' })
       const json = await res.json()
       if (!res.ok) {
         setError(json?.error || 'Upload failed')

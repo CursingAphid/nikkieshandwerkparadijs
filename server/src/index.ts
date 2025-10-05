@@ -10,7 +10,11 @@ import crypto from 'crypto';
 const app = express();
 
 // Middleware
-app.use(cors());
+const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || undefined;
+app.use(cors({
+  origin: FRONTEND_ORIGIN || true, // allow configured origin or all in dev
+  credentials: true,
+}));
 app.use(express.json());
 app.use(morgan('dev'));
 app.use(cookieParser(process.env.COOKIE_SECRET || 'change-me'));
@@ -46,7 +50,7 @@ app.post('/api/admin/login', (req, res) => {
     res.cookie('admin', '1', {
       httpOnly: true,
       sameSite: 'lax',
-      secure: false, // set true when behind HTTPS
+      secure: process.env.NODE_ENV === 'production',
       signed: true,
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: '/',

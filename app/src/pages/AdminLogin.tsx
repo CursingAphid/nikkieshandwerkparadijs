@@ -1,3 +1,4 @@
+import { apiFetch } from '../lib/api'
 import { useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 
@@ -13,7 +14,7 @@ function AdminLogin() {
     let cancelled = false
     async function check() {
       try {
-        const res = await fetch('/api/admin/me')
+        const res = await apiFetch('/admin/me')
         const json = await res.json()
         if (json?.authed && !cancelled) {
           navigate('/admin', { replace: true })
@@ -29,7 +30,7 @@ function AdminLogin() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
-    const res = await fetch('/api/admin/login', {
+    const res = await apiFetch('/admin/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password })

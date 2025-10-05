@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { apiFetch } from '../lib/api'
 
 type Item = {
   id: string
@@ -19,7 +20,7 @@ function Admin() {
     let cancelled = false
     async function load() {
       try {
-        const res = await fetch('/api/items')
+        const res = await apiFetch('/items')
         const json = await res.json()
         if (!res.ok) throw new Error(json?.error || 'Failed to load items')
         if (!cancelled) setItems(json)
