@@ -24,6 +24,32 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
 
+// --- Helpers ---
+function parseCategoryIds(input: unknown): number[] | null {
+  if (input == null) return null;
+  if (Array.isArray(input)) {
+    const out = input.map((v) => Number(v)).filter((n) => Number.isFinite(n));
+    return out.length ? out : [];
+  }
+  if (typeof input === 'string') {
+    try {
+      const arr = JSON.parse(input);
+      if (Array.isArray(arr)) {
+        const out = arr.map((v) => Number(v)).filter((n) => Number.isFinite(n));
+        return out.length ? out : [];
+      }
+    } catch (_) {
+      // not JSON, try comma separated
+      const out = input
+        .split(',')
+        .map((s) => Number(s.trim()))
+        .filter((n) => Number.isFinite(n));
+      return out.length ? out : [];
+    }
+  }
+  return [];
+}
+
 // --- Admin auth ---
 function isAuthed(req: express.Request): boolean {
   const token = req.signedCookies?.admin || '';
@@ -92,7 +118,6 @@ app.post('/api/items', requireAdmin, upload.array('images', 10), async (req, res
       res.status(400).json({ error: 'Name is required' });
       return;
     }
-    const descriptionRaw = (req.body.description ?? '').toString();
     const priceRaw = (req.body.price ?? '').toString().trim();
     const priceValue = priceRaw === '' ? null : Number(priceRaw);
     const price = priceValue !== null && Number.isFinite(priceValue) ? priceValue : null;
@@ -143,15 +168,26 @@ app.post('/api/items', requireAdmin, upload.array('images', 10), async (req, res
       .from('items')
       .insert({
         name: nameRaw,
-        description: descriptionRaw || null,
         price,
         images: urls.length ? urls : null,
+        is_favorite: String(req.body.is_favorite || '').toLowerCase() === 'true'
       })
       .select()
       .single();
     if (error) {
       res.status(500).json({ error: error.message });
       return;
+    }
+
+    // Link categories if provided
+    const categoryIds = parseCategoryIds(req.body.categoryIds);
+    if (categoryIds && categoryIds.length > 0) {
+      const rows = categoryIds.map((cid) => ({ item_id: data.id as number, category_id: cid }));
+      const { error: linkErr } = await supabase.from('item_categories').insert(rows);
+      if (linkErr) {
+        res.status(500).json({ error: linkErr.message });
+        return;
+      }
     }
 
     res.status(201).json(data);
@@ -231,7 +267,6 @@ app.patch('/api/items/:id', requireAdmin, upload.array('images', 10), async (req
 
     const nameRaw = (req.body.name ?? existing.name ?? '').toString();
     if (!nameRaw.trim()) { res.status(400).json({ error: 'Name is required' }); return; }
-    const description = (req.body.description ?? existing.description ?? '') as string;
     const priceRaw = (req.body.price ?? (existing.price ?? '')).toString().trim();
     const priceValue = priceRaw === '' ? null : Number(priceRaw);
     const price = priceValue !== null && Number.isFinite(priceValue) ? priceValue : null;
@@ -277,18 +312,35 @@ app.patch('/api/items/:id', requireAdmin, upload.array('images', 10), async (req
       ? [...existing.images, ...newUrls]
       : (newUrls.length ? newUrls : null);
 
+    const updatePayload: any = {
+      name: nameRaw,
+      price,
+      images: mergedImages,
+    };
+    if (typeof req.body.is_favorite !== 'undefined') {
+      updatePayload.is_favorite = String(req.body.is_favorite).toLowerCase() === 'true';
+    }
+
     const { data, error } = await supabase
       .from('items')
-      .update({
-        name: nameRaw,
-        description: description || null,
-        price,
-        images: mergedImages,
-      })
+      .update(updatePayload)
       .eq('id', req.params.id)
       .select()
       .single();
     if (error) { res.status(500).json({ error: error.message }); return; }
+
+    // If categoryIds provided, replace links
+    const categoryIds = parseCategoryIds(req.body.categoryIds);
+    if (categoryIds !== null) {
+      const itemId = data.id as number;
+      const { error: delErr } = await supabase.from('item_categories').delete().eq('item_id', itemId);
+      if (delErr) { res.status(500).json({ error: delErr.message }); return; }
+      if (categoryIds.length > 0) {
+        const rows = categoryIds.map((cid) => ({ item_id: itemId, category_id: cid }));
+        const { error: insErr } = await supabase.from('item_categories').insert(rows);
+        if (insErr) { res.status(500).json({ error: insErr.message }); return; }
+      }
+    }
     res.json(data);
   } catch (e) {
     // eslint-disable-next-line no-console
@@ -297,6 +349,163 @@ app.patch('/api/items/:id', requireAdmin, upload.array('images', 10), async (req
   }
 });
 
+// --- Categories ---
+// List categories
+app.get('/api/categories', async (_req, res) => {
+  try {
+    const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_KEY!);
+    const { data, error } = await supabase.from('categories').select('*').order('created_at', { ascending: false });
+    if (error) { res.status(500).json({ error: error.message }); return; }
+    res.json(data || []);
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error(e);
+    res.status(500).json({ error: 'List categories failed' });
+  }
+});
+
+// Create category
+app.post('/api/categories', requireAdmin, upload.single('headimage'), async (req, res) => {
+  try {
+    const { name, slug, description, type } = req.body || {};
+    const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_KEY!);
+    
+    let headimageurl = null;
+    if (req.file) {
+      const fileExt = req.file.originalname.split('.').pop();
+      const fileName = `category-${Date.now()}.${fileExt}`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from(process.env.SUPABASE_BUCKET || 'uploads')
+        .upload(`categories/${fileName}`, req.file.buffer, {
+          contentType: req.file.mimetype,
+        });
+      
+      if (uploadError) {
+        res.status(500).json({ error: uploadError.message });
+        return;
+      }
+      
+      const { data: urlData } = supabase.storage
+        .from(process.env.SUPABASE_BUCKET || 'uploads')
+        .getPublicUrl(`categories/${fileName}`);
+      headimageurl = urlData.publicUrl;
+    }
+    
+    const { data, error } = await supabase
+      .from('categories')
+      .insert({ 
+        name: String(name || '').trim(), 
+        slug: String(slug || '').trim(),
+        description: description ? String(description).trim() : null,
+        type: type ? String(type).trim() : null,
+        headimageurl
+      })
+      .select()
+      .single();
+    if (error) { res.status(500).json({ error: error.message }); return; }
+    res.status(201).json(data);
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error(e);
+    res.status(500).json({ error: 'Create category failed' });
+  }
+});
+
+// Update category
+app.patch('/api/categories/:id', requireAdmin, upload.single('headimage'), async (req, res) => {
+  try {
+    const { name, slug, description, type } = req.body || {};
+    const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_KEY!);
+    
+    const updateData: any = {
+      name: name != null ? String(name) : undefined,
+      slug: slug != null ? String(slug) : undefined,
+      description: description != null ? String(description).trim() : undefined,
+      type: type != null ? String(type).trim() : undefined
+    };
+    
+    if (req.file) {
+      const fileExt = req.file.originalname.split('.').pop();
+      const fileName = `category-${Date.now()}.${fileExt}`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from(process.env.SUPABASE_BUCKET || 'uploads')
+        .upload(`categories/${fileName}`, req.file.buffer, {
+          contentType: req.file.mimetype,
+        });
+      
+      if (uploadError) {
+        res.status(500).json({ error: uploadError.message });
+        return;
+      }
+      
+      const { data: urlData } = supabase.storage
+        .from(process.env.SUPABASE_BUCKET || 'uploads')
+        .getPublicUrl(`categories/${fileName}`);
+      updateData.headimageurl = urlData.publicUrl;
+    }
+    
+    const { data, error } = await supabase
+      .from('categories')
+      .update(updateData)
+      .eq('id', req.params.id)
+      .select()
+      .single();
+    if (error) { res.status(500).json({ error: error.message }); return; }
+    res.json(data);
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error(e);
+    res.status(500).json({ error: 'Update category failed' });
+  }
+});
+
+// Items in a category
+app.get('/api/categories/:id/items', async (req, res) => {
+  try {
+    const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_KEY!);
+    const { data, error } = await supabase
+      .from('items')
+      .select('*')
+      .in(
+        'id',
+        (await supabase
+          .from('item_categories')
+          .select('item_id')
+          .eq('category_id', req.params.id)).data?.map((r: any) => r.item_id) || []
+      )
+      .order('created_at', { ascending: false });
+    if (error) { res.status(500).json({ error: error.message }); return; }
+    res.json(data || []);
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error(e);
+    res.status(500).json({ error: 'List items for category failed' });
+  }
+});
+
+// Categories for an item
+app.get('/api/items/:id/categories', async (req, res) => {
+  try {
+    const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_KEY!);
+    const { data, error } = await supabase
+      .from('categories')
+      .select('*')
+      .in(
+        'id',
+        (await supabase
+          .from('item_categories')
+          .select('category_id')
+          .eq('item_id', req.params.id)).data?.map((r: any) => r.category_id) || []
+      )
+      .order('name', { ascending: true });
+    if (error) { res.status(500).json({ error: error.message }); return; }
+    res.json(data || []);
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error(e);
+    res.status(500).json({ error: 'List categories for item failed' });
+  }
+});
 app.post('/api/upload', upload.single('file'), async (req, res) => {
   try {
     const file = req.file;

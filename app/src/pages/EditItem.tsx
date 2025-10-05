@@ -15,9 +15,10 @@ function EditItem() {
   const { id } = useParams()
   const [item, setItem] = useState<Item | null>(null)
   const [name, setName] = useState('')
-  const [description, setDescription] = useState('')
   const [price, setPrice] = useState('')
   const [newImages, setNewImages] = useState<File[]>([])
+  const [categories, setCategories] = useState<{ id: number, name: string }[]>([])
+  const [selectedCats, setSelectedCats] = useState<number[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -32,8 +33,15 @@ function EditItem() {
         if (cancelled) return
         setItem(json)
         setName(json.name || '')
-        setDescription(json.description || '')
+        
         setPrice(json.price == null ? '' : String(json.price))
+        // load item categories
+        const catsRes = await apiFetch(`/items/${id}/categories`)
+        const cats = await catsRes.json()
+        if (Array.isArray(cats)) setSelectedCats(cats.map((c: any) => c.id))
+        const allRes = await apiFetch('/categories')
+        const all = await allRes.json()
+        if (Array.isArray(all)) setCategories(all)
       } catch (e: any) {
         if (!cancelled) setError(e.message || 'Failed to load item')
       } finally {
@@ -51,9 +59,9 @@ function EditItem() {
       setSaving(true)
       const form = new FormData()
       form.append('name', name)
-      form.append('description', description)
       form.append('price', price)
       for (const f of newImages) form.append('images', f)
+      form.append('categoryIds', JSON.stringify(selectedCats))
       const res = await fetch(apiUrl(`/items/${id}`), { method: 'PATCH', body: form, credentials: 'include' })
       const json = await res.json()
       if (!res.ok) throw new Error(json?.error || 'Update failed')
@@ -79,10 +87,7 @@ function EditItem() {
             <label className="label">Name *</label>
             <input className="input" value={name} onChange={e => setName(e.target.value)} required />
           </div>
-          <div style={{ marginBottom: 16 }}>
-            <label className="label">Description</label>
-            <textarea className="input" value={description} onChange={e => setDescription(e.target.value)} />
-          </div>
+          
           <div style={{ marginBottom: 16 }}>
             <label className="label">Price</label>
             <input className="input" type="number" step="0.01" value={price} onChange={e => setPrice(e.target.value)} />
@@ -91,6 +96,26 @@ function EditItem() {
             <label className="label">Add Images</label>
             <input type="file" accept="image/*" multiple onChange={e => setNewImages(Array.from(e.target.files || []))} />
           </div>
+          {categories.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <label className="label">Categories</label>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {categories.map((c) => (
+                  <label key={c.id} style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedCats.includes(c.id)}
+                      onChange={(e) => {
+                        const checked = e.target.checked
+                        setSelectedCats((prev) => checked ? [...prev, c.id] : prev.filter((x) => x !== c.id))
+                      }}
+                    />
+                    {c.name}
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
           <button className="btn" disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
         </form>
 

@@ -1,0 +1,110 @@
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { apiFetch } from '../lib/api'
+
+function NewCategory() {
+  const navigate = useNavigate()
+  const [name, setName] = useState('')
+  const [slug, setSlug] = useState('')
+  const [description, setDescription] = useState('')
+  const [type, setType] = useState<'crochet' | 'embroidery' | ''>('')
+  const [headimage, setHeadimage] = useState<File | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const slugFromName = name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setError(null)
+    try {
+      setSaving(true)
+      const form = new FormData()
+      form.append('name', name)
+      form.append('slug', slug || slugFromName)
+      form.append('description', description)
+      form.append('type', type)
+      if (headimage) form.append('headimage', headimage)
+      
+      const res = await apiFetch('/categories', {
+        method: 'POST',
+        body: form
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json?.error || 'Create failed')
+      navigate('/admin/categories')
+    } catch (e: any) {
+      setError(e.message || 'Create failed')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="container">
+      <h1 className="title">New Category</h1>
+      
+      <div className="card" style={{ maxWidth: 640 }}>
+        <form onSubmit={onSubmit}>
+          <div style={{ display: 'grid', gap: 12 }}>
+            <div>
+              <label className="label">Name</label>
+              <input 
+                className="input" 
+                value={name} 
+                onChange={(e) => setName(e.target.value)} 
+                required 
+              />
+            </div>
+            <div>
+              <label className="label">Slug</label>
+              <input 
+                className="input" 
+                value={slug} 
+                onChange={(e) => setSlug(e.target.value)} 
+                placeholder={slugFromName} 
+              />
+            </div>
+            <div>
+              <label className="label">Type</label>
+              <select 
+                className="input" 
+                value={type} 
+                onChange={(e) => setType(e.target.value as 'crochet' | 'embroidery' | '')}
+                required
+              >
+                <option value="">Select type...</option>
+                <option value="crochet">Crochet</option>
+                <option value="embroidery">Embroidery</option>
+              </select>
+            </div>
+            <div>
+              <label className="label">Description</label>
+              <textarea 
+                className="input" 
+                value={description} 
+                onChange={(e) => setDescription(e.target.value)}
+                rows={3}
+              />
+            </div>
+            <div>
+              <label className="label">Head Image</label>
+              <input 
+                type="file" 
+                accept="image/*" 
+                onChange={(e) => setHeadimage(e.target.files?.[0] || null)}
+                className="input"
+              />
+            </div>
+            <button className="btn" disabled={saving}>
+              {saving ? 'Creating…' : 'Create Category'}
+            </button>
+          </div>
+        </form>
+        {error && <p className="text-red-600 mt-3">{error}</p>}
+      </div>
+    </div>
+  )
+}
+
+export default NewCategory

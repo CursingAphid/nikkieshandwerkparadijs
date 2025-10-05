@@ -1,11 +1,13 @@
 import { apiUrl } from '../lib/api'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { apiFetch } from '../lib/api'
 
 function NewItem() {
   const [name, setName] = useState('')
-  const [description, setDescription] = useState('')
   const [price, setPrice] = useState('')
   const [images, setImages] = useState<File[]>([])
+  const [categories, setCategories] = useState<{ id: number, name: string }[]>([])
+  const [selectedCats, setSelectedCats] = useState<number[]>([])
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [created, setCreated] = useState<any | null>(null)
@@ -19,15 +21,14 @@ function NewItem() {
       setSubmitting(true)
       const form = new FormData()
       form.append('name', name)
-      form.append('description', description)
       form.append('price', price)
       for (const f of images) form.append('images', f)
+      if (selectedCats.length > 0) form.append('categoryIds', JSON.stringify(selectedCats))
       const res = await fetch(apiUrl('/items'), { method: 'POST', body: form, credentials: 'include' })
       const json = await res.json()
       if (!res.ok) { setError(json?.error || 'Create failed'); return }
       setCreated(json)
       setName('')
-      setDescription('')
       setPrice('')
       setImages([])
     } catch (err) {
@@ -36,6 +37,20 @@ function NewItem() {
       setSubmitting(false)
     }
   }
+
+  useEffect(() => {
+    let cancelled = false
+    async function loadCats() {
+      try {
+        const res = await apiFetch('/categories')
+        const json = await res.json()
+        if (!res.ok) return
+        if (!cancelled) setCategories(json)
+      } catch {}
+    }
+    loadCats()
+    return () => { cancelled = true }
+  }, [])
 
   return (
     <div className="container">
@@ -46,10 +61,7 @@ function NewItem() {
             <label className="label">Name *</label>
             <input className="input" value={name} onChange={e => setName(e.target.value)} required />
           </div>
-          <div style={{ marginBottom: 16 }}>
-            <label className="label">Description</label>
-            <textarea className="input" value={description} onChange={e => setDescription(e.target.value)} />
-          </div>
+          
           <div style={{ marginBottom: 16 }}>
             <label className="label">Price</label>
             <input className="input" type="number" step="0.01" value={price} onChange={e => setPrice(e.target.value)} />
@@ -66,6 +78,27 @@ function NewItem() {
               }}
             />
           </div>
+
+          {categories.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <label className="label">Categories</label>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {categories.map((c) => (
+                  <label key={c.id} style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedCats.includes(c.id)}
+                      onChange={(e) => {
+                        const checked = e.target.checked
+                        setSelectedCats((prev) => checked ? [...prev, c.id] : prev.filter((x) => x !== c.id))
+                      }}
+                    />
+                    {c.name}
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
           <button className="btn" disabled={submitting}>{submitting ? 'Saving...' : 'Create Item'}</button>
         </form>
         {images.length > 0 && (
