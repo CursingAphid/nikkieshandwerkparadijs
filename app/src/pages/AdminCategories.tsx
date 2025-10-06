@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+// Link not used in this component
 import { apiFetch } from '../lib/api'
 import ActivityCard from '../components/ActivityCard'
 

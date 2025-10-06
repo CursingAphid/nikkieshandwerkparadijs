@@ -12,7 +12,6 @@ type Item = {
 
 function AdminItems() {
   const [items, setItems] = useState<Item[]>([])
-  const [favoritesCount, setFavoritesCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -23,10 +22,7 @@ function AdminItems() {
         const res = await apiFetch('/items')
         const json = await res.json()
         if (!res.ok) throw new Error(json?.error || 'Failed to load items')
-        if (!cancelled) {
-          setItems(json)
-          setFavoritesCount((json as Item[]).filter((i) => (i as any).is_favorite).length)
-        }
+        if (!cancelled) setItems(json)
       } catch (e: any) {
         if (!cancelled) setError(e.message || 'Failed to load items')
       } finally {

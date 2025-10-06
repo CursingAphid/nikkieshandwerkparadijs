@@ -1,8 +1,8 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import './index.css'
-import App from './App.tsx'
+// App is not used; routes mount pages directly
 import Home from './pages/Home.tsx'
 import Build from './pages/Build.tsx'
 import NewItem from './pages/NewItem.tsx'

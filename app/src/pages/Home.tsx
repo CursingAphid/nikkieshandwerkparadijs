@@ -98,7 +98,7 @@ function Home() {
               const height = (r: number) => r === 1 ? 'h-36 md:h-48' : r === 2 ? 'h-28 md:h-40' : 'h-28 md:h-36'
               return (
                 <div className="flex items-end justify-center gap-6 sm:gap-20">
-                  {podium.map(({ item, rank }, idx) => {
+                  {podium.map(({ item, rank }) => {
                     const first = Array.isArray(item.images) && item.images.length > 0 ? item.images[0] : null
                     const meta = itemIdToCategory[item.id] || { slug: '' }
                     const catSlug = meta.slug
