@@ -5,6 +5,8 @@ import Logo from '../assets/home/logo.png'
 import JungleBg from '../assets/home/jungle background.png'
 import MonkeyBench from '../assets/home/money.png'
 import Giraffe from '../assets/home/giraffe.png'
+import HaakIconn from '../assets/home/haakicoon.png'
+import BorduurIconn from '../assets/home/borduuricoon.png'
 
 type Item = {
   id: number
@@ -75,10 +77,10 @@ function Home() {
   }, [])
 
   return (
-    <div>
+    <div className="overflow-hidden">
       {/* Full-bleed title section */}
       <section className="w-full relative overflow-visible" style={{ backgroundImage: `url(${JungleBg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
-        <div className="relative z-20 mx-auto max-w-6xl px-4 py-16 md:py-28 lg:py-32 flex flex-col items-center justify-center">
+        <div className="relative z-0 mx-auto max-w-6xl px-4 py-16 md:py-28 lg:py-32 flex flex-col items-center justify-center">
           <img src={Logo} alt="Nikkie's Handwerk Paradijs" className="-mt-4 md:-mt-6 lg:-mt-8 w-40 md:w-72 lg:w-80 h-auto" />
           <div className="mt-4 md:mt-6 text-center text-white" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.85), 0 6px 16px rgba(0,0,0,0.35)' }}>
           </div>
@@ -105,7 +107,55 @@ function Home() {
       </section>
 
       <main className="mx-auto max-w-6xl px-4 pt-0 pb-8">
-        {/* removed separate full-bleed title bar */}
+        {/* Haken and Borduren sections */}
+        <section className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] bg-gray-800 text-white">
+          {/* Haken Section - Text left, Icon right - full width with gray-700 */}
+          <div className="bg-gray-700">
+            <div className="mx-auto max-w-6xl px-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+                <div className="text-left py-12">
+                  <h2 className="font-heading text-3xl md:text-4xl font-bold mb-6">Haken</h2>
+                  <p className="text-base md:text-lg leading-relaxed">
+                    Het haken van knuffels of kraamcadeaus is een populair tijdsverdrijf als je graag creatief bezig wilt zijn. Het is een geweldige manier om iets persoonlijks en unieks te maken. Door verschillende kleuren en garens te gebruiken kun je alles aanpassen naar de gewenste smaak.
+                  </p>
+                  <p className="text-base md:text-lg leading-relaxed mt-4">
+                    Een ander voordeel van haken is dat het een zeer ontspannende en meditatieve bezigheid is. Het vereist geduld en precisie, wat mij helpt om stress te verminderen en de geest te ontspannen.
+                  </p>
+                </div>
+                <div className="flex justify-end items-stretch py-12">
+                  <div className="w-full max-w-xs md:max-w-sm h-full rounded-lg overflow-hidden" style={{ backgroundColor: '#5C2D3D' }}>
+                    <img src={HaakIconn} alt="Haken" className="w-full h-full object-cover" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Borduren Section - Icon left, Text right - gray-800 background */}
+          <div className="bg-gray-800">
+            <div className="mx-auto max-w-6xl px-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+                <div className="flex justify-start items-stretch py-12 order-2 md:order-1">
+                  <div className="w-full max-w-xs md:max-w-sm h-full rounded-lg overflow-hidden" style={{ backgroundColor: '#5C2D3D' }}>
+                    <img src={BorduurIconn} alt="Borduren" className="w-full h-full object-cover" />
+                  </div>
+                </div>
+                <div className="text-left py-12 order-1 md:order-2">
+                  <h2 className="font-heading text-3xl md:text-4xl font-bold mb-6">Borduren</h2>
+                  <p className="text-base md:text-lg leading-relaxed">
+                    Borduren voegt een persoonlijk en uniek element toe aan dierendekens, keukentextiel of babyartikelen zoals badjasjes, badcapejes, handdoekjes, rompertjes, slabbetjes en nog veel meer.
+                  </p>
+                  <p className="text-base md:text-lg leading-relaxed mt-4">
+                    Een naam, tekst of afbeelding op een item borduren maakt het item speciaal en persoonlijk voor jezelf of om iemand cadeau te geven.
+                  </p>
+                  <p className="text-base md:text-lg leading-relaxed mt-4">
+                    Geborduurde items blijven langer mooi en de kleuren vervagen niet zo snel waardoor ze langer meegaan.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
 
         {favorites.length > 0 && (
           <div className="mb-12">
@@ -127,7 +177,7 @@ function Home() {
                       const href = catSlug ? `/werkjes/${catSlug}/${itemSlug}` : undefined
                       const card = (
                         <div className="relative rounded-2xl shadow-[0_10px_20px_rgba(0,0,0,0.25)]">
-                          <div className="aspect-square bg-gray-100 overflow-hidden rounded-2xl">
+                          <div className="aspect-[940/788] bg-gray-100 overflow-hidden rounded-2xl">
                             {first ? (
                               <img src={first} alt={item.name} className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
                             ) : (
@@ -150,6 +200,7 @@ function Home() {
                     })}
                   </div>
                 </div>
+                <div className="stage-bottom"></div>
               </section>
             </div>
           </div>
