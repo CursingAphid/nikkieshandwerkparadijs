@@ -79,7 +79,7 @@ function Home() {
       {/* Full-bleed title section */}
       <section className="w-full relative overflow-visible" style={{ backgroundImage: `url(${JungleBg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
         <div className="relative z-20 mx-auto max-w-6xl px-4 py-16 md:py-28 lg:py-32 flex flex-col items-center justify-center">
-          <img src={Logo} alt="Nikkie's Handwerk Paradijs" className="-mt-10 md:-mt-16 lg:-mt-18 w-56 md:w-72 lg:w-80 h-auto" />
+          <img src={Logo} alt="Nikkie's Handwerk Paradijs" className="-mt-4 md:-mt-6 lg:-mt-8 w-56 md:w-72 lg:w-80 h-auto" />
           <div className="mt-4 md:mt-6 text-center text-white" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.85), 0 6px 16px rgba(0,0,0,0.35)' }}>
           </div>
         </div>
@@ -91,7 +91,7 @@ function Home() {
         <img 
           src={Giraffe} 
           alt="Giraffe"
-          className="animal-drop-delayed absolute -top-2.5 left-0 w-auto h-[120px] sm:h-[170px] md:h-[220px] lg:h-[270px] select-none pointer-events-none z-10"
+          className="animal-drop-delayed absolute -top-2.5 left-[5%] md:left-[10%] lg:left-[12%] w-auto h-[120px] sm:h-[170px] md:h-[220px] lg:h-[270px] select-none pointer-events-none z-10"
         />
         {escalatorUrls.map((url, i) => (
           <img
@@ -99,7 +99,7 @@ function Home() {
             src={url}
             alt="Escalator image"
             className="southpark-anim absolute bottom-0 left-[-30vw] w-auto h-[90px] sm:h-[120px] md:h-[160px] lg:h-[200px] select-none pointer-events-none z-10"
-            style={{ animationDelay: `${i * 6}s`, animationDuration: '40s' }}
+            style={{ animationDelay: `${i * 6}s`, animationDuration: '42s' }}
           />
         ))}
       </section>
