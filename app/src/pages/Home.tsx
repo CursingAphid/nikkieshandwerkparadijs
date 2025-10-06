@@ -79,7 +79,7 @@ function Home() {
       {/* Full-bleed title section */}
       <section className="w-full relative overflow-visible" style={{ backgroundImage: `url(${JungleBg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
         <div className="relative z-20 mx-auto max-w-6xl px-4 py-16 md:py-28 lg:py-32 flex flex-col items-center justify-center">
-          <img src={Logo} alt="Nikkie's Handwerk Paradijs" className="-mt-4 md:-mt-6 lg:-mt-8 w-56 md:w-72 lg:w-80 h-auto" />
+          <img src={Logo} alt="Nikkie's Handwerk Paradijs" className="-mt-4 md:-mt-6 lg:-mt-8 w-40 md:w-72 lg:w-80 h-auto" />
           <div className="mt-4 md:mt-6 text-center text-white" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.85), 0 6px 16px rgba(0,0,0,0.35)' }}>
           </div>
         </div>
