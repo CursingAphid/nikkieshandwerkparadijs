@@ -349,6 +349,46 @@ app.patch('/api/items/:id', requireAdmin, upload.array('images', 10), async (req
   }
 });
 
+// Delete a single image from an item (by exact URL match)
+app.delete('/api/items/:id/images', requireAdmin, async (req, res) => {
+  try {
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_KEY;
+    if (!supabaseUrl || !supabaseKey) {
+      res.status(500).json({ error: 'Supabase env vars not configured' });
+      return;
+    }
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const imageUrl = (req.query.url || '').toString();
+    if (!imageUrl) { res.status(400).json({ error: 'Missing image url' }); return; }
+
+    // Load existing item
+    const { data: existing, error: getErr } = await supabase
+      .from('items')
+      .select('*')
+      .eq('id', req.params.id)
+      .single();
+    if (getErr || !existing) { res.status(404).json({ error: 'Not found' }); return; }
+
+    const current: string[] = Array.isArray(existing.images) ? existing.images : [];
+    const next = current.filter((u) => u !== imageUrl);
+
+    const { data, error } = await supabase
+      .from('items')
+      .update({ images: next.length ? next : null })
+      .eq('id', req.params.id)
+      .select()
+      .single();
+    if (error) { res.status(500).json({ error: error.message }); return; }
+    res.json(data);
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error(e);
+    res.status(500).json({ error: 'Delete item image failed' });
+  }
+});
+
 // --- Categories ---
 // List categories
 app.get('/api/categories', async (_req, res) => {
@@ -456,6 +496,25 @@ app.patch('/api/categories/:id', requireAdmin, upload.single('headimage'), async
     // eslint-disable-next-line no-console
     console.error(e);
     res.status(500).json({ error: 'Update category failed' });
+  }
+});
+
+// Remove category head image (sets headimageurl to null)
+app.delete('/api/categories/:id/headimage', requireAdmin, async (req, res) => {
+  try {
+    const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_KEY!);
+    const { data, error } = await supabase
+      .from('categories')
+      .update({ headimageurl: null })
+      .eq('id', req.params.id)
+      .select()
+      .single();
+    if (error) { res.status(500).json({ error: error.message }); return; }
+    res.json(data);
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error(e);
+    res.status(500).json({ error: 'Delete head image failed' });
   }
 });
 

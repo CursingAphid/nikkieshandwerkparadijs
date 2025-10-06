@@ -81,6 +81,20 @@ function EditCategory() {
     }
   }
 
+  async function onRemoveHeadImage() {
+    if (!id) return
+    const ok = confirm('Hoofdafbeelding verwijderen?')
+    if (!ok) return
+    try {
+      const res = await apiFetch(`/categories/${id}/headimage`, { method: 'DELETE' })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json?.error || 'Verwijderen mislukt')
+      setCurrentImageUrl(null)
+    } catch (e: any) {
+      alert(e.message || 'Verwijderen mislukt')
+    }
+  }
+
   if (loading) return <div className="container"><p>Loading…</p></div>
   if (error) return <div className="container"><p className="text-red-600">{error}</p></div>
 
@@ -134,8 +148,16 @@ function EditCategory() {
             <div>
               <label className="label">Head Image</label>
               {currentImageUrl && (
-                <div className="mb-2">
+                <div className="mb-2 group relative inline-block">
                   <img src={currentImageUrl} alt="Current" className="w-32 h-32 object-cover rounded" />
+                  <button
+                    type="button"
+                    aria-label="Delete head image"
+                    onClick={onRemoveHeadImage}
+                    className="absolute top-1.5 right-1.5 w-7 h-7 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 transition-opacity duration-150 group-hover:opacity-100"
+                  >
+                    ×
+                  </button>
                 </div>
               )}
               <input 

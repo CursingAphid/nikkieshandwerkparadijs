@@ -74,6 +74,21 @@ function EditItem() {
     }
   }
 
+  async function onDeleteImage(url: string) {
+    if (!item) return
+    const ok = confirm('Afbeelding verwijderen?')
+    if (!ok) return
+    try {
+      const endpoint = apiUrl(`/items/${item.id}/images?url=${encodeURIComponent(url)}`)
+      const res = await fetch(endpoint, { method: 'DELETE', credentials: 'include' })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json?.error || 'Verwijderen mislukt')
+      setItem(json)
+    } catch (e: any) {
+      alert(e.message || 'Verwijderen mislukt')
+    }
+  }
+
   if (loading) return <div className="container"><p>Loading…</p></div>
   if (error) return <div className="container"><p style={{ color: '#dc2626' }}>{error}</p></div>
   if (!item) return <div className="container"><p>Not found</p></div>
@@ -124,7 +139,17 @@ function EditItem() {
             <p>Existing images</p>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 8 }}>
               {item.images.map((u) => (
-                <img key={u} src={u} alt="img" style={{ width: '100%', borderRadius: 8 }} />
+                <div key={u} className="group relative rounded-lg overflow-hidden">
+                  <img src={u} alt="img" className="block w-full" />
+                  <button
+                    type="button"
+                    aria-label="Delete image"
+                    onClick={() => onDeleteImage(u)}
+                    className="absolute top-1.5 right-1.5 w-7 h-7 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 transition-opacity duration-150 group-hover:opacity-100"
+                  >
+                    ×
+                  </button>
+                </div>
               ))}
             </div>
           </div>
