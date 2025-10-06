@@ -5,7 +5,6 @@ import Logo from '../assets/home/logo.png'
 import JungleBg from '../assets/home/jungle background.png'
 import MonkeyBench from '../assets/home/money.png'
 import Giraffe from '../assets/home/giraffe.png'
-import Southpark from '../assets/home/Southpark.png'
 
 type Item = {
   id: number
@@ -20,6 +19,11 @@ function Home() {
   const [error, setError] = useState<string | null>(null)
   const [itemIdToCategory, setItemIdToCategory] = useState<Record<number, { slug: string; type?: string }>>({})
   const [favorites, setFavorites] = useState<Item[]>([])
+  // Load all images from assets/home/images_on_escalator for flexible walkers
+  const escalatorModules = import.meta.glob('../assets/home/images_on_escalator/*.{png,jpg,jpeg,webp,gif,svg}', { eager: true, import: 'default' }) as Record<string, string>
+  const escalatorUrls = Object.entries(escalatorModules)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([, url]) => url)
 
   function slugify(text: string): string {
     return text
@@ -74,26 +78,30 @@ function Home() {
     <div>
       {/* Full-bleed title section */}
       <section className="w-full relative overflow-visible" style={{ backgroundImage: `url(${JungleBg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
-        <div className="relative z-20 mx-auto max-w-6xl px-4 py-12 md:py-20 lg:py-24 flex flex-col items-center justify-center">
-          <img src={Logo} alt="Nikkie’s Handwerk Paradijs" className="w-56 md:w-72 lg:w-80 h-auto" />
+        <div className="relative z-20 mx-auto max-w-6xl px-4 py-16 md:py-28 lg:py-32 flex flex-col items-center justify-center">
+          <img src={Logo} alt="Nikkie's Handwerk Paradijs" className="-mt-10 md:-mt-16 lg:-mt-18 w-56 md:w-72 lg:w-80 h-auto" />
           <div className="mt-4 md:mt-6 text-center text-white" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.85), 0 6px 16px rgba(0,0,0,0.35)' }}>
           </div>
         </div>
         <img 
           src={MonkeyBench} 
           alt="Aap op bankje"
-          className="absolute top-0 right-[2%] md:right-[4%] lg:right-[6%] w-auto h-[120px] sm:h-[180px] md:h-[240px] lg:h-[300px] select-none pointer-events-none z-10"
+          className="animal-drop absolute -top-2.5 right-[2%] md:right-[4%] lg:right-[6%] w-auto h-[100px] sm:h-[150px] md:h-[200px] lg:h-[250px] select-none pointer-events-none z-10"
         />
         <img 
           src={Giraffe} 
           alt="Giraffe"
-          className="absolute top-0 left-0 w-auto h-[140px] sm:h-[200px] md:h-[260px] lg:h-[320px] select-none pointer-events-none z-10"
+          className="animal-drop-delayed absolute -top-2.5 left-0 w-auto h-[120px] sm:h-[170px] md:h-[220px] lg:h-[270px] select-none pointer-events-none z-10"
         />
-        <img
-          src={Southpark}
-          alt="South Park"
-          className="southpark-anim absolute bottom-0 left-[-15vw] w-auto h-[110px] sm:h-[150px] md:h-[200px] lg:h-[240px] select-none pointer-events-none z-10"
-        />
+        {escalatorUrls.map((url, i) => (
+          <img
+            key={`marinebear-${i}`}
+            src={url}
+            alt="Escalator image"
+            className="southpark-anim absolute bottom-0 left-[-30vw] w-auto h-[90px] sm:h-[120px] md:h-[160px] lg:h-[200px] select-none pointer-events-none z-10"
+            style={{ animationDelay: `${i * 6}s`, animationDuration: '40s' }}
+          />
+        ))}
       </section>
 
       <main className="mx-auto max-w-6xl px-4 pt-0 pb-8">
