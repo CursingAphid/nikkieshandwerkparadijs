@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { apiFetch } from '../lib/api'
 import Logo from '../assets/home/logo.png'
+import JungleBg from '../assets/home/jungle background.png'
 
 type Item = {
   id: number
@@ -69,9 +70,13 @@ function Home() {
   return (
     <div>
       {/* Full-bleed title section */}
-      <section className="w-full bg-green-100">
-        <div className="mx-auto max-w-6xl px-4 py-6 md:py-10 flex items-center justify-center">
-          <img src={Logo} alt="Nikkie’s Handwerk Paradijs" className="w-48 md:w-64 lg:w-72 h-auto" />
+      <section className="w-full" style={{ backgroundImage: `url(${JungleBg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+        <div className="mx-auto max-w-6xl px-4 py-12 md:py-20 lg:py-24 flex flex-col items-center justify-center">
+          <img src={Logo} alt="Nikkie’s Handwerk Paradijs" className="w-56 md:w-72 lg:w-80 h-auto" />
+          <div className="mt-4 md:mt-6 text-center text-white" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.85), 0 6px 16px rgba(0,0,0,0.35)' }}>
+            <p className="font-heading text-2xl md:text-3xl font-bold">Welkom op mijn site !</p>
+            <p className="font-heading text-base md:text-xl">Neem gerust een kijkje en stuur me een berichtje als je interesse in iets hebt</p>
+          </div>
         </div>
       </section>
 
@@ -86,72 +91,41 @@ function Home() {
                 <div className="stars"></div>
                 <div className="stars2"></div>
                 <div className="stars3"></div>
-                <div className="mx-auto max-w-6xl px-4 pt-6 pb-0">
+                <div className="mx-auto max-w-[1200px] px-4 md:px-6 pt-6 pb-12 favorites-container-pad">
                   <h2 className="text-white text-2xl font-semibold text-center mb-4">Favorieten</h2>
-                  {(() => {
-              const a = favorites.slice(0, 3)
-              const podium = a.length === 1
-                ? [{ item: a[0], rank: 1 }]
-                : a.length === 2
-                  ? [{ item: a[1], rank: 2 }, { item: a[0], rank: 1 }]
-                  : [{ item: a[1], rank: 2 }, { item: a[0], rank: 1 }, { item: a[2], rank: 3 }]
-              const height = (r: number) => r === 1 ? 'h-36 md:h-48' : r === 2 ? 'h-28 md:h-40' : 'h-28 md:h-36'
-              return (
-                <div className="flex items-end justify-center gap-6 sm:gap-20">
-                  {podium.map(({ item, rank }) => {
-                    const first = Array.isArray(item.images) && item.images.length > 0 ? item.images[0] : null
-                    const meta = itemIdToCategory[item.id] || { slug: '' }
-                    const catSlug = meta.slug
-                    const itemSlug = slugify(item.name)
-                    const href = catSlug ? `/werkjes/${catSlug}/${itemSlug}` : undefined
-                    const badgeBg = rank === 1 ? 'bg-[#d4af37]' : rank === 2 ? 'bg-[#c0c0c0]' : 'bg-[#cd7f32]'
-                    return (
-                      <div key={`podium-${item.id}-${rank}`} className="flex w-40 sm:w-52 md:w-64 flex-col items-center">
-                        <div className="relative z-10 w-full -mb-12">
-                          {href ? (
-                            <Link to={href} className="block overflow-hidden rounded-2xl ring-1 ring-gray-200 shadow-lg">
-                              <div className="aspect-square bg-gray-100">
-                                {first ? (
-                                  <img src={first} alt={item.name} className="w-full h-full object-cover transition-transform duration-500 hover:scale-105" />
-                                ) : (
-                                  <div className="w-full h-full flex items-center justify-center text-gray-400">Geen afbeelding</div>
-                                )}
-                              </div>
-                            </Link>
-                          ) : (
-                            <div className="overflow-hidden rounded-2xl ring-1 ring-gray-200 shadow-lg">
-                              <div className="aspect-square bg-gray-100">
-                                {first ? (
-                                  <img src={first} alt={item.name} className="w-full h-full object-cover" />
-                                ) : (
-                                  <div className="w-full h-full flex items-center justify-center text-gray-400">Geen afbeelding</div>
-                                )}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                        <div
-                          className={`relative w-full ${height(rank)} rounded-t-md flex items-end justify-center ring-1 ring-gray-200 ` +
-                            (rank === 1
-                              ? 'gold-texture'
-                              : rank === 2
-                              ? 'silver-texture'
-                              : 'bronze-texture')}
-                        >
-                          <div className="mb-3">
-                            <span className={`inline-flex items-center justify-center rounded-full border-2 border-white shadow-md ${badgeBg} w-12 h-12 md:w-16 md:h-16 text-2xl md:text-3xl font-extrabold text-white`}>
-                              {rank}
-                            </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                    {favorites.slice(0, 3).map((item, idx) => {
+                      const rank = idx + 1
+                      const first = Array.isArray(item.images) && item.images.length > 0 ? item.images[0] : null
+                      const meta = itemIdToCategory[item.id] || { slug: '' }
+                      const catSlug = meta.slug
+                      const itemSlug = slugify(item.name)
+                      const href = catSlug ? `/werkjes/${catSlug}/${itemSlug}` : undefined
+                      const card = (
+                        <div className="relative rounded-2xl shadow-[0_10px_20px_rgba(0,0,0,0.25)]">
+                          <div className="aspect-square bg-gray-100 overflow-hidden rounded-2xl">
+                            {first ? (
+                              <img src={first} alt={item.name} className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-gray-400">Geen afbeelding</div>
+                            )}
                           </div>
                         </div>
-                      </div>
-                    )
-                  })}
-                    </div>
-                  )
-                })()}
+                      )
+                      return (
+                        <div key={`fav-${item.id}-${rank}`}>
+                          {href ? (
+                            <Link to={href} className="block">
+                              {card}
+                            </Link>
+                          ) : (
+                            card
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
-                <div className="stage-floor"></div>
               </section>
             </div>
           </div>

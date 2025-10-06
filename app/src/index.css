@@ -65,21 +65,18 @@ body {
   /* red theater curtains on left and right */
   background:
     /* left curtain folds */
-    repeating-linear-gradient(90deg, rgba(185,28,28,0.35) 0 6px, rgba(127,29,29,0.35) 6px 12px),
-    linear-gradient(to bottom, rgba(239,68,68,0.96), rgba(153,27,27,0.96)),
+    repeating-linear-gradient(90deg, rgba(22,163,74,0.35) 0 6px, rgba(6,95,70,0.35) 6px 12px),
+    linear-gradient(to bottom, rgba(21,128,61,0.96), rgba(5,46,22,0.96)),
     /* right curtain folds */
-    repeating-linear-gradient(90deg, rgba(185,28,28,0.35) 0 6px, rgba(127,29,29,0.35) 6px 12px),
-    linear-gradient(to bottom, rgba(239,68,68,0.96), rgba(153,27,27,0.96));
+    repeating-linear-gradient(90deg, rgba(22,163,74,0.35) 0 6px, rgba(6,95,70,0.35) 6px 12px),
+    linear-gradient(to bottom, rgba(21,128,61,0.96), rgba(5,46,22,0.96));
   background-repeat: no-repeat;
   background-position: left top, left top, right top, right top;
   /* responsive curtain width (halved) */
   background-size: clamp(30px, 6vw, 70px) 100%, clamp(30px, 6vw, 70px) 100%, clamp(30px, 6vw, 70px) 100%, clamp(30px, 6vw, 70px) 100%;
 }
 
-/* Hide curtains on smaller viewports to avoid overlapping the podium */
-@media (max-width: 1069px) {
-  .stage::after { background: none !important; }
-}
+/* Keep curtains visible at all widths */
 .stage-floor {
   position: relative;
   height: 56px;
@@ -234,6 +231,12 @@ body {
 
 /* Use Balsamiq Sans for all headings site-wide */
 h1, h2, h3, h4, h5, h6, .title {
+  font-family: 'Balsamiq Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* Utility: apply the same heading font anywhere */
+.font-heading {
   font-family: 'Balsamiq Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
     Ubuntu, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', Arial, sans-serif;
 }
@@ -526,3 +529,87 @@ h1, h2, h3, h4, h5, h6, .title {
 
 /* Tailwind-powered button */
 .btn { @apply inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-900 shadow-sm hover:bg-gray-100 active:bg-gray-200; }
+
+/* Scoped md padding for favorites container */
+.favorites-container-pad.md\:px-6 {
+  padding-left: 5rem;
+  padding-right: 5rem;
+}
+
+
+/* Medal badges (gold/silver/bronze) */
+.medal-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  color: #fff;
+  font-weight: 800;
+  font-family: 'Balsamiq Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', Arial, sans-serif;
+  text-shadow: 0 1px 1px rgba(0,0,0,0.35);
+  box-shadow:
+    0 6px 10px rgba(0,0,0,0.25),
+    inset 0 2px 3px rgba(255,255,255,0.35),
+    inset 0 -3px 4px rgba(0,0,0,0.25);
+  border: 3px solid rgba(255,255,255,0.95);
+}
+.medal-badge::before,
+.medal-badge::after {
+  content: '';
+  position: absolute;
+  top: 60%;
+  left: 6px;
+  width: 16px;
+  height: 14px;
+  background: #d24;
+  transform: rotate(-12deg);
+  clip-path: polygon(0 0, 100% 0, 70% 100%, 30% 100%);
+  filter: drop-shadow(0 1px 0 rgba(0,0,0,0.2));
+}
+.medal-badge::after {
+  left: auto;
+  right: 6px;
+  transform: rotate(12deg) scaleX(-1);
+}
+.medal-badge > * { position: relative; z-index: 1; }
+
+/* inner ring shine */
+.medal-badge { position: absolute; }
+.medal-badge::marker { content: none; }
+
+/* metallic fills */
+.medal {
+  background:
+    radial-gradient(28% 28% at 30% 30%, rgba(255,255,255,0.35), transparent 60%),
+    radial-gradient(60% 60% at 70% 70%, rgba(0,0,0,0.12), transparent 60%);
+}
+.medal-gold {
+  background-image:
+    radial-gradient(28% 28% at 30% 30%, rgba(255,255,255,0.45), transparent 60%),
+    radial-gradient(60% 60% at 70% 70%, rgba(0,0,0,0.12), transparent 60%),
+    conic-gradient(from 0deg,
+      #d4af37 0%, #c79a2f 14%, #e7cc76 28%, #b8862a 42%, #f0d98a 56%, #c99a31 70%, #dfc468 84%, #d4af37 100%);
+}
+.medal-silver {
+  background-image:
+    radial-gradient(28% 28% at 30% 30%, rgba(255,255,255,0.45), transparent 60%),
+    radial-gradient(60% 60% at 70% 70%, rgba(0,0,0,0.12), transparent 60%),
+    conic-gradient(from 0deg,
+      #e5e5e5 0%, #cfcfcf 16%, #f4f4f4 32%, #bdbdbd 48%, #ededed 64%, #c8c8c8 80%, #f0f0f0 100%);
+}
+.medal-bronze {
+  background-image:
+    radial-gradient(28% 28% at 30% 30%, rgba(255,255,255,0.35), transparent 60%),
+    radial-gradient(60% 60% at 70% 70%, rgba(0,0,0,0.12), transparent 60%),
+    conic-gradient(from 0deg,
+      #cd7f32 0%, #a66524 16%, #e0a06a 32%, #8f541d 48%, #d48a49 64%, #b56d2e 80%, #e8b07a 100%);
+}
+
+/* white inner ring */
+.medal-badge { outline: 0px solid transparent; }
+
+/* Responsive sizing handled via Tailwind width/height classes applied in JSX */
