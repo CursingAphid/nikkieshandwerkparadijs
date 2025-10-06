@@ -537,7 +537,14 @@ h1, h2, h3, h4, h5, h6, .title {
 }
 
 
+
+
 /* Medal badges (gold/silver/bronze) */
+.southpark-anim { animation: southparkMove 32s linear infinite; will-change: transform; }
+@keyframes southparkMove {
+  0% { transform: translateX(-20vw); }
+  100% { transform: translateX(120vw); }
+}
 .medal-badge {
   position: absolute;
   top: 8px;

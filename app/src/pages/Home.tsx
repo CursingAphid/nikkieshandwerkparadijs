@@ -3,6 +3,9 @@ import { Link } from 'react-router-dom'
 import { apiFetch } from '../lib/api'
 import Logo from '../assets/home/logo.png'
 import JungleBg from '../assets/home/jungle background.png'
+import MonkeyBench from '../assets/home/money.png'
+import Giraffe from '../assets/home/giraffe.png'
+import Southpark from '../assets/home/Southpark.png'
 
 type Item = {
   id: number
@@ -70,14 +73,27 @@ function Home() {
   return (
     <div>
       {/* Full-bleed title section */}
-      <section className="w-full" style={{ backgroundImage: `url(${JungleBg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
-        <div className="mx-auto max-w-6xl px-4 py-12 md:py-20 lg:py-24 flex flex-col items-center justify-center">
+      <section className="w-full relative overflow-visible" style={{ backgroundImage: `url(${JungleBg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+        <div className="relative z-20 mx-auto max-w-6xl px-4 py-12 md:py-20 lg:py-24 flex flex-col items-center justify-center">
           <img src={Logo} alt="Nikkie’s Handwerk Paradijs" className="w-56 md:w-72 lg:w-80 h-auto" />
           <div className="mt-4 md:mt-6 text-center text-white" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.85), 0 6px 16px rgba(0,0,0,0.35)' }}>
-            <p className="font-heading text-2xl md:text-3xl font-bold">Welkom op mijn site !</p>
-            <p className="font-heading text-base md:text-xl">Neem gerust een kijkje en stuur me een berichtje als je interesse in iets hebt</p>
           </div>
         </div>
+        <img 
+          src={MonkeyBench} 
+          alt="Aap op bankje"
+          className="absolute top-0 right-[2%] md:right-[4%] lg:right-[6%] w-auto h-[120px] sm:h-[180px] md:h-[240px] lg:h-[300px] select-none pointer-events-none z-10"
+        />
+        <img 
+          src={Giraffe} 
+          alt="Giraffe"
+          className="absolute top-0 left-0 w-auto h-[140px] sm:h-[200px] md:h-[260px] lg:h-[320px] select-none pointer-events-none z-10"
+        />
+        <img
+          src={Southpark}
+          alt="South Park"
+          className="southpark-anim absolute bottom-0 left-[-15vw] w-auto h-[110px] sm:h-[150px] md:h-[200px] lg:h-[240px] select-none pointer-events-none z-10"
+        />
       </section>
 
       <main className="mx-auto max-w-6xl px-4 pt-0 pb-8">
