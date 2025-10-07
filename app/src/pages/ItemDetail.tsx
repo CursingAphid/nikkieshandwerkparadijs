@@ -16,19 +16,30 @@ type Category = {
   id: number
   name: string
   slug: string
+  headcategory_id?: number | null
+}
+
+type HeadCategory = {
+  id: number
+  name: string
+  slug: string
+  type: string | null
 }
 
 function ItemDetail() {
-  const { type, categorySlug, itemSlug } = useParams<{ type: string; categorySlug: string; itemSlug: string }>()
+  const { type, param1, param2, param3 } = useParams<{ type: string; param1: string; param2?: string; param3?: string }>()
   const navigate = useNavigate()
   const [item, setItem] = useState<Item | null>(null)
   const [category, setCategory] = useState<Category | null>(null)
+  const [headcategory, setHeadcategory] = useState<HeadCategory | null>(null)
   const [allItems, setAllItems] = useState<Item[]>([])
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showShareModal, setShowShareModal] = useState(false)
   const [copySuccess, setCopySuccess] = useState(false)
+  const [touchStart, setTouchStart] = useState<number | null>(null)
+  const [touchEnd, setTouchEnd] = useState<number | null>(null)
 
   // Helper function to create slug from name
   const slugify = (text: string) => {
@@ -50,17 +61,116 @@ function ItemDetail() {
     }
   }
 
+  // Swipe handling functions
+  const minSwipeDistance = 50
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null)
+    setTouchStart(e.targetTouches[0].clientX)
+  }
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX)
+  }
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return
+    
+    const distance = touchStart - touchEnd
+    const isLeftSwipe = distance > minSwipeDistance
+    const isRightSwipe = distance < -minSwipeDistance
+
+    if (isLeftSwipe || isRightSwipe) {
+      const currentIndex = images.findIndex(img => img === selectedImage)
+      
+      if (isLeftSwipe) {
+        // Swipe left - go to next image (loop to first if at end)
+        if (currentIndex < images.length - 1) {
+          setSelectedImage(images[currentIndex + 1])
+        } else {
+          setSelectedImage(images[0])
+        }
+      } else if (isRightSwipe) {
+        // Swipe right - go to previous image (loop to last if at beginning)
+        if (currentIndex > 0) {
+          setSelectedImage(images[currentIndex - 1])
+        } else {
+          setSelectedImage(images[images.length - 1])
+        }
+      }
+    }
+  }
+
+  // Navigation functions
+  const goToNextImage = () => {
+    const currentIndex = images.findIndex(img => img === selectedImage)
+    if (currentIndex < images.length - 1) {
+      setSelectedImage(images[currentIndex + 1])
+    } else {
+      // Loop to first image
+      setSelectedImage(images[0])
+    }
+  }
+
+  const goToPreviousImage = () => {
+    const currentIndex = images.findIndex(img => img === selectedImage)
+    if (currentIndex > 0) {
+      setSelectedImage(images[currentIndex - 1])
+    } else {
+      // Loop to last image
+      setSelectedImage(images[images.length - 1])
+    }
+  }
+
   useEffect(() => {
     let cancelled = false
     async function load() {
       try {
-        // Load all categories
-        const catsRes = await apiFetch('/categories')
-        const catsData = await catsRes.json()
-        if (!catsRes.ok) throw new Error(catsData?.error || 'Failed to load categories')
+        // Load both categories and headcategories
+        const [catsRes, headcatsRes] = await Promise.all([
+          apiFetch('/categories'),
+          apiFetch('/headcategories')
+        ])
         
-        // Find the category by slug
-        const foundCategory = catsData.find((c: Category) => c.slug === categorySlug)
+        const [catsData, headcatsData] = await Promise.all([
+          catsRes.json(),
+          headcatsRes.json()
+        ])
+        
+        if (!catsRes.ok) throw new Error(catsData?.error || 'Failed to load categories')
+        if (!headcatsRes.ok) throw new Error(headcatsData?.error || 'Failed to load headcategories')
+        
+        let foundCategory: Category | null = null
+        let foundHeadcategory: HeadCategory | null = null
+        
+        // Determine URL structure based on parameters
+        const isParam1Headcategory = headcatsData.some((hc: HeadCategory) => hc.slug === param1)
+        
+        if (param3) {
+          // 4 parameters: /werkjes/type/headcategory/category/item
+          if (isParam1Headcategory) {
+            // Find the headcategory first
+            foundHeadcategory = headcatsData.find((hc: HeadCategory) => hc.slug === param1)
+            if (foundHeadcategory) {
+              // Get categories linked to this headcategory
+              const linkedCatsRes = await apiFetch(`/headcategories/${foundHeadcategory.id}/categories`)
+              const linkedCatsData = await linkedCatsRes.json()
+              if (linkedCatsRes.ok) {
+                // Find the specific category within this headcategory
+                foundCategory = linkedCatsData.find((c: Category) => c.slug === param2)
+              }
+            }
+          }
+        } else if (param2) {
+          // 3 parameters: /werkjes/type/category/item (standalone category)
+          foundCategory = catsData.find((c: Category) => c.slug === param1)
+          
+          // Find the headcategory if this category belongs to one
+          if (foundCategory && foundCategory.headcategory_id) {
+            foundHeadcategory = headcatsData.find((hc: HeadCategory) => hc.id === foundCategory!.headcategory_id)
+          }
+        }
+        
         if (!foundCategory) {
           throw new Error('Category not found')
         }
@@ -70,14 +180,16 @@ function ItemDetail() {
         const itemsData = await itemsRes.json()
         if (!itemsRes.ok) throw new Error(itemsData?.error || 'Failed to load items')
 
-        // Find the item by slug
-        const foundItem = itemsData.find((i: Item) => slugify(i.name) === itemSlug)
+            // Find the item by slug
+            const itemSlug = param3 || param2
+            const foundItem = itemsData.find((i: Item) => slugify(i.name) === itemSlug)
         if (!foundItem) {
           throw new Error('Item not found')
         }
 
         if (!cancelled) {
           setCategory(foundCategory)
+          setHeadcategory(foundHeadcategory)
           setItem(foundItem)
           setAllItems(itemsData)
           // Set the first image as selected by default
@@ -93,7 +205,7 @@ function ItemDetail() {
     }
     load()
     return () => { cancelled = true }
-  }, [categorySlug, itemSlug])
+  }, [param1, param2, param3])
 
   if (loading) {
     return (
@@ -125,17 +237,28 @@ function ItemDetail() {
       {/* Breadcrumb and Share Button */}
       <div className="mb-6 flex items-center justify-between">
         <div className="text-sm text-gray-600">
-          {category && type && (
-            <>
-              <Link 
-                to={`/werkjes/${type}/${categorySlug}`}
-                className="hover:text-gray-900 hover:underline"
-              >
-                {category.name}
-              </Link>
-              <span className="mx-2">/</span>
-            </>
-          )}
+              {headcategory && type && (
+                <>
+                  <Link 
+                    to={`/werkjes/${type}/${headcategory.slug}`}
+                    className="hover:text-gray-900 hover:underline"
+                  >
+                    {headcategory.name}
+                  </Link>
+                  <span className="mx-2">/</span>
+                </>
+              )}
+              {category && type && (
+                <>
+                  <Link 
+                    to={headcategory ? `/werkjes/${type}/${headcategory.slug}/${category.slug}` : `/werkjes/${type}/${category.slug}`}
+                    className="hover:text-gray-900 hover:underline"
+                  >
+                    {category.name}
+                  </Link>
+                  <span className="mx-2">/</span>
+                </>
+              )}
           <span className="text-gray-900">{item.name}</span>
         </div>
         
@@ -156,7 +279,12 @@ function ItemDetail() {
         {/* Left side - Images */}
         <div>
           {/* Main Image */}
-          <div className="w-full aspect-[940/788] bg-gray-100 rounded-2xl overflow-hidden mb-4 shadow-lg">
+          <div 
+            className="w-full aspect-[940/788] bg-gray-100 rounded-2xl overflow-hidden mb-4 shadow-lg relative"
+            onTouchStart={onTouchStart}
+            onTouchMove={onTouchMove}
+            onTouchEnd={onTouchEnd}
+          >
             {mainImage ? (
               <img
                 src={mainImage}
@@ -166,6 +294,47 @@ function ItemDetail() {
             ) : (
               <div className="w-full h-full flex items-center justify-center text-gray-400">
                 Geen afbeelding
+              </div>
+            )}
+            
+            {/* Navigation Arrows */}
+            {images.length > 1 && (
+              <>
+                {/* Previous Arrow */}
+                <button
+                  onClick={goToPreviousImage}
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-colors z-10"
+                  aria-label="Previous image"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-6 h-6">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                
+                {/* Next Arrow */}
+                <button
+                  onClick={goToNextImage}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-colors z-10"
+                  aria-label="Next image"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-6 h-6">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </>
+            )}
+            
+            {/* Swipe indicators for mobile */}
+            {images.length > 1 && (
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+                {images.map((_, index) => (
+                  <div
+                    key={index}
+                    className={`w-2 h-2 rounded-full transition-colors ${
+                      images[index] === selectedImage ? 'bg-white' : 'bg-white/50'
+                    }`}
+                  />
+                ))}
               </div>
             )}
           </div>
@@ -233,7 +402,7 @@ function ItemDetail() {
               .filter((it) => it.id !== item.id)
               .map((it) => {
                 const first = Array.isArray(it.images) && it.images.length > 0 ? it.images[0] : null
-                const itemHref = type ? `/werkjes/${type}/${categorySlug}/${slugify(it.name)}` : '#'
+                    const itemHref = type && category ? (headcategory ? `/werkjes/${type}/${headcategory.slug}/${category.slug}/${slugify(it.name)}` : `/werkjes/${type}/${category.slug}/${slugify(it.name)}`) : '#'
                 
                 return (
                   <Link

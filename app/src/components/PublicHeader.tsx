@@ -16,6 +16,23 @@ type Category = {
   name: string
   slug: string
   type: string | null
+  headcategory_id?: number | null
+}
+
+type HeadCategory = {
+  id: number
+  name: string
+  slug: string
+  type: string | null
+}
+
+type CategoryWithSubcategories = {
+  id: number
+  name: string
+  slug: string
+  type: string | null
+  isHeadcategory: boolean
+  subcategories?: Category[]
 }
 
 function PublicHeader() {
@@ -23,10 +40,14 @@ function PublicHeader() {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<Item[]>([])
   const [categories, setCategories] = useState<Category[]>([])
+  const [headcategories, setHeadcategories] = useState<HeadCategory[]>([])
   const [showResults, setShowResults] = useState(false)
   const [loading, setLoading] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
+  const [hoveredNavItem, setHoveredNavItem] = useState<string | null>(null)
+  const [expandedHeadcategories, setExpandedHeadcategories] = useState<Set<number>>(new Set())
+  const [headcategorySubcategories, setHeadcategorySubcategories] = useState<{[key: number]: Category[]}>({})
   const searchRef = useRef<HTMLDivElement>(null)
 
   const is = (p: string) => loc.pathname === p
@@ -47,19 +68,65 @@ function PublicHeader() {
       .replace(/^-+|-+$/g, '')
   }
 
-  // Load categories on mount
+  // Load categories and headcategories on mount
   useEffect(() => {
-    async function loadCategories() {
+    async function loadData() {
       try {
-        const res = await apiFetch('/categories')
-        const data = await res.json()
-        if (res.ok) setCategories(data)
+        const [categoriesRes, headcategoriesRes] = await Promise.all([
+          apiFetch('/categories'),
+          apiFetch('/headcategories')
+        ])
+        
+        const [categoriesData, headcategoriesData] = await Promise.all([
+          categoriesRes.json(),
+          headcategoriesRes.json()
+        ])
+        
+        if (categoriesRes.ok) setCategories(categoriesData)
+        if (headcategoriesRes.ok) {
+          setHeadcategories(headcategoriesData)
+          
+          // Preload subcategories for all headcategories
+          const subcategoryPromises = headcategoriesData.map(async (headcat: HeadCategory) => {
+            try {
+              const res = await apiFetch(`/headcategories/${headcat.id}/categories`)
+              const data = await res.json()
+              if (res.ok) {
+                return { headcategoryId: headcat.id, subcategories: data }
+              }
+            } catch (e) {
+              console.error(`Failed to load subcategories for headcategory ${headcat.id}`, e)
+            }
+            return { headcategoryId: headcat.id, subcategories: [] }
+          })
+          
+          const subcategoryResults = await Promise.all(subcategoryPromises)
+          const subcategoryMap: {[key: number]: Category[]} = {}
+          subcategoryResults.forEach(result => {
+            subcategoryMap[result.headcategoryId] = result.subcategories
+          })
+          
+          setHeadcategorySubcategories(subcategoryMap)
+        }
       } catch (e) {
-        console.error('Failed to load categories', e)
+        console.error('Failed to load data', e)
       }
     }
-    loadCategories()
+    loadData()
   }, [])
+
+  // Toggle headcategory expansion
+  const toggleHeadcategory = (headcategoryId: number) => {
+    setExpandedHeadcategories(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(headcategoryId)) {
+        newSet.delete(headcategoryId)
+      } else {
+        newSet.add(headcategoryId)
+      }
+      return newSet
+    })
+  }
 
   // Search function
   useEffect(() => {
@@ -137,6 +204,133 @@ function PublicHeader() {
       slug: cat?.slug || '',
       type: cat?.type || 'haken'
     }
+  }
+
+  // Get dropdown data for a specific type (haken or borduren)
+  const getDropdownData = (type: 'haken' | 'borduren') => {
+    const headcats = headcategories.filter(hc => hc.type === type)
+    const standaloneCats = categories.filter(c => 
+      c.type === type && 
+      (c.headcategory_id === null || c.headcategory_id === undefined)
+    )
+    
+    // Create unified list with headcategories and standalone categories
+    const unifiedList: CategoryWithSubcategories[] = []
+    
+    // Add headcategories first
+    headcats.forEach(headcat => {
+      unifiedList.push({
+        id: headcat.id,
+        name: headcat.name,
+        slug: headcat.slug,
+        type: headcat.type,
+        isHeadcategory: true,
+        subcategories: headcategorySubcategories[headcat.id] || []
+      })
+    })
+    
+    // Add standalone categories
+    standaloneCats.forEach(cat => {
+      unifiedList.push({
+        id: cat.id,
+        name: cat.name,
+        slug: cat.slug,
+        type: cat.type,
+        isHeadcategory: false
+      })
+    })
+    
+    return unifiedList
+  }
+
+  // Navigation link with dropdown support
+  const navLink = (to: string, label: string, hasDropdown: boolean = false) => {
+    const dropdownData = hasDropdown ? getDropdownData(label.toLowerCase() as 'haken' | 'borduren') : null
+    
+    return (
+      <div 
+        className="relative flex items-center"
+        onMouseEnter={() => hasDropdown && setHoveredNavItem(label)}
+        onMouseLeave={() => hasDropdown && setHoveredNavItem(null)}
+      >
+        <Link
+          to={to}
+          className={`px-3 py-2 rounded-md text-sm font-medium ${is(to) ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-100'}`}
+        >
+          {label}
+        </Link>
+        
+        {/* Dropdown Menu */}
+        {hasDropdown && hoveredNavItem === label && dropdownData && (
+          <div className="absolute top-full left-0 w-64 bg-white border border-gray-200 rounded-lg shadow-xl z-50">
+            <div className="py-2">
+              {dropdownData.map((item) => (
+                <div key={item.id}>
+                  {item.isHeadcategory ? (
+                    <div>
+                      <div className="flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                        <Link
+                          to={`/werkjes/${label.toLowerCase()}/${item.slug}`}
+                          className="flex-1"
+                        >
+                          {item.name}
+                        </Link>
+                        <button
+                          className="ml-2 p-1 text-gray-400 hover:text-gray-600"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            toggleHeadcategory(item.id)
+                          }}
+                        >
+                          <span 
+                            className="transition-transform duration-200"
+                            style={{ 
+                              transform: expandedHeadcategories.has(item.id) ? 'rotate(90deg)' : 'rotate(0deg)',
+                              display: 'inline-block'
+                            }}
+                          >
+                            ▶
+                          </span>
+                        </button>
+                      </div>
+                      
+                      {/* Subcategories - shown when expanded */}
+                      {expandedHeadcategories.has(item.id) && item.subcategories && item.subcategories.length > 0 && (
+                        <div className="ml-4 border-l border-gray-200 pl-2">
+                          {item.subcategories.map((subcat) => (
+                            <Link
+                              key={subcat.id}
+                              to={`/werkjes/${label.toLowerCase()}/${item.slug}/${subcat.slug}`}
+                              className="block px-2 py-1 text-sm text-gray-600 hover:bg-gray-50 rounded"
+                            >
+                              {subcat.name}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <Link
+                      to={`/werkjes/${label.toLowerCase()}/${item.slug}`}
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                    >
+                      {item.name}
+                    </Link>
+                  )}
+                </div>
+              ))}
+              
+              {/* Show message if no items */}
+              {dropdownData.length === 0 && (
+                <div className="px-4 py-2 text-sm text-gray-500">
+                  Geen {label.toLowerCase()} categorieën beschikbaar
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    )
   }
 
   return (
@@ -244,8 +438,8 @@ function PublicHeader() {
             {/* Desktop Navigation */}
             <nav className="hidden md:flex gap-2">
               {link('/', 'Home')}
-              {link('/werkjes/haken', 'Haken')}
-              {link('/werkjes/borduren', 'Borduren')}
+              {navLink('/werkjes/haken', 'Haken', true)}
+              {navLink('/werkjes/borduren', 'Borduren', true)}
               {link('/over', 'Over')}
               {link('/build', 'Stel je eigen set samen')}
             </nav>
@@ -285,20 +479,137 @@ function PublicHeader() {
               >
                 Home
               </Link>
-              <Link
-                to="/werkjes/haken"
-                onClick={() => setMobileMenuOpen(false)}
-                className={`block px-3 py-2 rounded-md text-sm font-medium ${is('/werkjes/haken') ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-100'}`}
-              >
-                Haken
-              </Link>
-              <Link
-                to="/werkjes/borduren"
-                onClick={() => setMobileMenuOpen(false)}
-                className={`block px-3 py-2 rounded-md text-sm font-medium ${is('/werkjes/borduren') ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-100'}`}
-              >
-                Borduren
-              </Link>
+              
+              {/* Haken with submenu */}
+              <div>
+                <Link
+                  to="/werkjes/haken"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`block px-3 py-2 rounded-md text-sm font-medium ${is('/werkjes/haken') ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-100'}`}
+                >
+                  Haken
+                </Link>
+                {(() => {
+                  const dropdownData = getDropdownData('haken')
+                  return (
+                    <div className="ml-4 space-y-1">
+                      {dropdownData.map((item) => (
+                        <div key={item.id}>
+                          {item.isHeadcategory ? (
+                            <div>
+                              <div className="px-3 py-1 text-xs text-gray-600 font-medium flex items-center justify-between">
+                                <Link
+                                  to={`/werkjes/haken/${item.slug}`}
+                                  onClick={() => setMobileMenuOpen(false)}
+                                  className="flex-1"
+                                >
+                                  {item.name}
+                                </Link>
+                                <button
+                                  className="ml-2 p-1 text-gray-400 hover:text-gray-600"
+                                  onClick={() => toggleHeadcategory(item.id)}
+                                >
+                                  <span className={`transition-transform duration-200 ${expandedHeadcategories.has(item.id) ? 'rotate-90' : ''}`}>
+                                    ▶
+                                  </span>
+                                </button>
+                              </div>
+                              {expandedHeadcategories.has(item.id) && item.subcategories && item.subcategories.length > 0 && (
+                                <div className="ml-4 space-y-1">
+                                  {item.subcategories.map((subcat) => (
+                                    <Link
+                                      key={subcat.id}
+                                      to={`/werkjes/haken/${item.slug}/${subcat.slug}`}
+                                      onClick={() => setMobileMenuOpen(false)}
+                                      className="block px-3 py-1 text-xs text-gray-500 hover:text-gray-800"
+                                    >
+                                      • {subcat.name}
+                                    </Link>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <Link
+                              to={`/werkjes/haken/${item.slug}`}
+                              onClick={() => setMobileMenuOpen(false)}
+                              className="block px-3 py-1 text-xs text-gray-600 hover:text-gray-800"
+                            >
+                              • {item.name}
+                            </Link>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )
+                })()}
+              </div>
+              
+              {/* Borduren with submenu */}
+              <div>
+                <Link
+                  to="/werkjes/borduren"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`block px-3 py-2 rounded-md text-sm font-medium ${is('/werkjes/borduren') ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-100'}`}
+                >
+                  Borduren
+                </Link>
+                {(() => {
+                  const dropdownData = getDropdownData('borduren')
+                  return (
+                    <div className="ml-4 space-y-1">
+                      {dropdownData.map((item) => (
+                        <div key={item.id}>
+                          {item.isHeadcategory ? (
+                            <div>
+                              <div className="px-3 py-1 text-xs text-gray-600 font-medium flex items-center justify-between">
+                                <Link
+                                  to={`/werkjes/borduren/${item.slug}`}
+                                  onClick={() => setMobileMenuOpen(false)}
+                                  className="flex-1"
+                                >
+                                  {item.name}
+                                </Link>
+                                <button
+                                  className="ml-2 p-1 text-gray-400 hover:text-gray-600"
+                                  onClick={() => toggleHeadcategory(item.id)}
+                                >
+                                  <span className={`transition-transform duration-200 ${expandedHeadcategories.has(item.id) ? 'rotate-90' : ''}`}>
+                                    ▶
+                                  </span>
+                                </button>
+                              </div>
+                              {expandedHeadcategories.has(item.id) && item.subcategories && item.subcategories.length > 0 && (
+                                <div className="ml-4 space-y-1">
+                                  {item.subcategories.map((subcat) => (
+                                    <Link
+                                      key={subcat.id}
+                                      to={`/werkjes/borduren/${item.slug}/${subcat.slug}`}
+                                      onClick={() => setMobileMenuOpen(false)}
+                                      className="block px-3 py-1 text-xs text-gray-500 hover:text-gray-800"
+                                    >
+                                      • {subcat.name}
+                                    </Link>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <Link
+                              to={`/werkjes/borduren/${item.slug}`}
+                              onClick={() => setMobileMenuOpen(false)}
+                              className="block px-3 py-1 text-xs text-gray-600 hover:text-gray-800"
+                            >
+                              • {item.name}
+                            </Link>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )
+                })()}
+              </div>
+              
               <Link
                 to="/over"
                 onClick={() => setMobileMenuOpen(false)}
@@ -417,5 +728,6 @@ function PublicHeader() {
 }
 
 export default PublicHeader
+
 
 

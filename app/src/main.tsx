@@ -11,17 +11,18 @@ import EditItem from './pages/EditItem.tsx'
 import AdminLogin from './pages/AdminLogin.tsx'
 import RequireAdmin from './components/RequireAdmin.tsx'
 import AdminCategories from './pages/AdminCategories.tsx'
+import AdminHeadCategories from './pages/AdminHeadCategories.tsx'
+import NewHeadCategory from './pages/NewHeadCategory.tsx'
 import CategoryItems from './pages/CategoryItems.tsx'
 import NewCategory from './pages/NewCategory.tsx'
 import EditCategory from './pages/EditCategory.tsx'
 import AdminItems from './pages/AdminItems.tsx'
 import AdminLayout from './components/AdminLayout.tsx'
 import PublicHeader from './components/PublicHeader.tsx'
-import ItemDetail from './pages/ItemDetail.tsx'
-import Category from './pages/Category.tsx'
 import Over from './pages/Over.tsx'
 import Haken from './pages/Haken.tsx'
 import Borduren from './pages/Borduren.tsx'
+import RouteHandler from './components/RouteHandler.tsx'
 
 function ShellHeader() {
   const loc = useLocation()
@@ -40,8 +41,9 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/over" element={<Over />} />
             <Route path="/werkjes/haken" element={<Haken />} />
             <Route path="/werkjes/borduren" element={<Borduren />} />
-        <Route path="/werkjes/:type/:categorySlug" element={<Category />} />
-        <Route path="/werkjes/:type/:categorySlug/:itemSlug" element={<ItemDetail />} />
+        <Route path="/werkjes/:type/:param1/:param2/:param3" element={<RouteHandler />} />
+        <Route path="/werkjes/:type/:param1/:param2" element={<RouteHandler />} />
+        <Route path="/werkjes/:type/:param1" element={<RouteHandler />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin" element={<RequireAdmin><AdminLayout><Admin /></AdminLayout></RequireAdmin>} />
         <Route path="/admin/items" element={<RequireAdmin><AdminLayout><AdminItems /></AdminLayout></RequireAdmin>} />
@@ -51,6 +53,8 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/admin/categories/new" element={<RequireAdmin><AdminLayout><NewCategory /></AdminLayout></RequireAdmin>} />
         <Route path="/admin/categories/:id/edit" element={<RequireAdmin><AdminLayout><EditCategory /></AdminLayout></RequireAdmin>} />
         <Route path="/admin/categories/:id/items" element={<RequireAdmin><AdminLayout><CategoryItems /></AdminLayout></RequireAdmin>} />
+        <Route path="/admin/headcategories" element={<RequireAdmin><AdminLayout><AdminHeadCategories /></AdminLayout></RequireAdmin>} />
+        <Route path="/admin/headcategories/new" element={<RequireAdmin><AdminLayout><NewHeadCategory /></AdminLayout></RequireAdmin>} />
       </Routes>
     </BrowserRouter>
   </StrictMode>,

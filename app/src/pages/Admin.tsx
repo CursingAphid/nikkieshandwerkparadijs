@@ -21,8 +21,19 @@ type Item = {
   created_at: string
 }
 
+type HeadCategory = {
+  id: number
+  name: string
+  slug: string
+  description: string | null
+  type: string | null
+  headimageurl: string | null
+  created_at: string
+}
+
 function Admin() {
   const [categories, setCategories] = useState<Category[]>([])
+  const [headcategories, setHeadcategories] = useState<HeadCategory[]>([])
   const [recentItems, setRecentItems] = useState<Item[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -41,9 +52,15 @@ function Admin() {
         const itemsData = await itemsRes.json()
         if (!itemsRes.ok) throw new Error(itemsData?.error || 'Failed to load items')
         
+        // Load headcategories
+        const headcatsRes = await apiFetch('/headcategories')
+        const headcatsData = await headcatsRes.json()
+        if (!headcatsRes.ok) throw new Error(headcatsData?.error || 'Failed to load headcategories')
+        
         if (!cancelled) {
           setCategories(catsData)
           setRecentItems(itemsData.slice(0, 6)) // Show 6 most recent
+          setHeadcategories(headcatsData)
         }
       } catch (e: any) {
         if (!cancelled) setError(e.message || 'Failed to load data')
@@ -95,6 +112,27 @@ function Admin() {
               ))}
             </div>
             )}
+          </div>
+
+          {/* Head Categories Section */}
+          <div className="card">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Head Categories</h2>
+              <Link className="btn" to="/admin/headcategories/new">
+                New Head Category
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {headcategories.map((headcat) => (
+                <div key={headcat.id} className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                  <div className="font-semibold text-lg">{headcat.name}</div>
+                  <div className="text-sm text-gray-500 mb-3">{headcat.slug}</div>
+                  <div className="flex gap-2">
+                    <Link className="btn" to={`/admin/headcategories/${headcat.id}/categories`}>View Categories</Link>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Categories Section */}
