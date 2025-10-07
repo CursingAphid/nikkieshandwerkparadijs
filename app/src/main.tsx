@@ -20,6 +20,8 @@ import PublicHeader from './components/PublicHeader.tsx'
 import ItemDetail from './pages/ItemDetail.tsx'
 import Category from './pages/Category.tsx'
 import Over from './pages/Over.tsx'
+import Haken from './pages/Haken.tsx'
+import Borduren from './pages/Borduren.tsx'
 
 function ShellHeader() {
   const loc = useLocation()
@@ -36,6 +38,8 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/" element={<Home />} />
         <Route path="/build" element={<Build />} />
         <Route path="/over" element={<Over />} />
+            <Route path="/werkjes/haken" element={<Haken />} />
+            <Route path="/werkjes/borduren" element={<Borduren />} />
         <Route path="/werkjes/:type/:categorySlug" element={<Category />} />
         <Route path="/werkjes/:type/:categorySlug/:itemSlug" element={<ItemDetail />} />
         <Route path="/admin/login" element={<AdminLogin />} />
