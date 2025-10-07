@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import BordurenBanner from '../assets/borduren/borduren_banner.png';
 import WolligeAchtergrond from '../assets/haken/wollige_achtergrond.png';
 import { apiFetch } from '../lib/api';

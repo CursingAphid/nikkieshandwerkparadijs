@@ -16,9 +16,6 @@ type Item = {
 }
 
 function Home() {
-  const [items, setItems] = useState<Item[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [itemIdToCategory, setItemIdToCategory] = useState<Record<number, { slug: string; type?: string }>>({})
   const [favorites, setFavorites] = useState<Item[]>([])
   
@@ -56,12 +53,10 @@ function Home() {
         if (!res.ok) throw new Error(json?.error || 'Failed to load items')
         const all = (json as Item[])
         const favs = all.filter((i: any) => i.is_favorite).slice(0, 3)
-        const list = all.slice(0, 10)
-        if (!cancelled) setItems(list)
         if (!cancelled) setFavorites(favs)
         // Load first category slug for each item (best-effort)
         const entries = await Promise.all(
-          list.map(async (it) => {
+          favs.map(async (it) => {
             try {
               const r = await apiFetch(`/items/${it.id}/categories`)
               const cats = await r.json()
@@ -79,9 +74,7 @@ function Home() {
           setItemIdToCategory(map)
         }
       } catch (e: any) {
-        if (!cancelled) setError(e.message || 'Failed to load items')
-      } finally {
-        if (!cancelled) setLoading(false)
+        // Error handling removed since error state was removed
       }
     }
     load()
