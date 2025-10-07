@@ -5,9 +5,8 @@ import { apiFetch } from '../lib/api'
 function NewCategory() {
   const navigate = useNavigate()
   const [name, setName] = useState('')
-  const [slug, setSlug] = useState('')
   const [description, setDescription] = useState('')
-  const [type, setType] = useState<'crochet' | 'embroidery' | ''>('')
+  const [type, setType] = useState<'haken' | 'borduren' | ''>('')
   const [headimage, setHeadimage] = useState<File | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -21,7 +20,7 @@ function NewCategory() {
       setSaving(true)
       const form = new FormData()
       form.append('name', name)
-      form.append('slug', slug || slugFromName)
+      form.append('slug', slugFromName)
       form.append('description', description)
       form.append('type', type)
       if (headimage) form.append('headimage', headimage)
@@ -57,12 +56,12 @@ function NewCategory() {
               />
             </div>
             <div>
-              <label className="label">Slug</label>
+              <label className="label">Slug (auto-generated)</label>
               <input 
-                className="input" 
-                value={slug} 
-                onChange={(e) => setSlug(e.target.value)} 
-                placeholder={slugFromName} 
+                className="input bg-gray-100" 
+                value={slugFromName} 
+                readOnly
+                placeholder="Will be generated from name"
               />
             </div>
             <div>
@@ -70,12 +69,12 @@ function NewCategory() {
               <select 
                 className="input" 
                 value={type} 
-                onChange={(e) => setType(e.target.value as 'crochet' | 'embroidery' | '')}
+                onChange={(e) => setType(e.target.value as 'haken' | 'borduren' | '')}
                 required
               >
                 <option value="">Select type...</option>
-                <option value="crochet">Crochet</option>
-                <option value="embroidery">Embroidery</option>
+                <option value="haken">Haken</option>
+                <option value="borduren">Borduren</option>
               </select>
             </div>
             <div>

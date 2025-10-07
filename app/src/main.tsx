@@ -17,6 +17,9 @@ import EditCategory from './pages/EditCategory.tsx'
 import AdminItems from './pages/AdminItems.tsx'
 import AdminLayout from './components/AdminLayout.tsx'
 import PublicHeader from './components/PublicHeader.tsx'
+import ItemDetail from './pages/ItemDetail.tsx'
+import Category from './pages/Category.tsx'
+import Over from './pages/Over.tsx'
 
 function ShellHeader() {
   const loc = useLocation()
@@ -32,6 +35,9 @@ createRoot(document.getElementById('root')!).render(
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/build" element={<Build />} />
+        <Route path="/over" element={<Over />} />
+        <Route path="/werkjes/:type/:categorySlug" element={<Category />} />
+        <Route path="/werkjes/:type/:categorySlug/:itemSlug" element={<ItemDetail />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin" element={<RequireAdmin><AdminLayout><Admin /></AdminLayout></RequireAdmin>} />
         <Route path="/admin/items" element={<RequireAdmin><AdminLayout><AdminItems /></AdminLayout></RequireAdmin>} />

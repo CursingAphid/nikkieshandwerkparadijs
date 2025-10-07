@@ -171,10 +171,11 @@ function Home() {
                     {favorites.slice(0, 3).map((item, idx) => {
                       const rank = idx + 1
                       const first = Array.isArray(item.images) && item.images.length > 0 ? item.images[0] : null
-                      const meta = itemIdToCategory[item.id] || { slug: '' }
+                      const meta = itemIdToCategory[item.id] || { slug: '', type: '' }
                       const catSlug = meta.slug
+                      const catType = meta.type || 'haken'
                       const itemSlug = slugify(item.name)
-                      const href = catSlug ? `/werkjes/${catSlug}/${itemSlug}` : undefined
+                      const href = catSlug && catType ? `/werkjes/${catType}/${catSlug}/${itemSlug}` : undefined
                       const card = (
                         <div className="relative rounded-2xl shadow-[0_10px_20px_rgba(0,0,0,0.25)]">
                           <div className="aspect-[940/788] bg-gray-100 overflow-hidden rounded-2xl">
@@ -214,14 +215,16 @@ function Home() {
             <div className="carousel-track">
               {[...items, ...items].map((it, idx) => {
                 const first = Array.isArray(it.images) && it.images.length > 0 ? it.images[0] : null
-                const catSlug = itemIdToCategory[it.id]?.slug
+                const meta = itemIdToCategory[it.id] || { slug: '', type: '' }
+                const catSlug = meta.slug
+                const catType = meta.type || 'haken'
                 const itemSlug = slugify(it.name)
-                const href = catSlug ? `/werkjes/${catSlug}/${itemSlug}` : undefined
+                const href = catSlug && catType ? `/werkjes/${catType}/${catSlug}/${itemSlug}` : undefined
                 return (
                   <div key={`${it.id}-${idx}`} className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-md w-56 md:w-64 lg:w-72 flex-shrink-0">
                     {href ? (
                       <Link to={href} className="block">
-                        <div className="aspect-square bg-gray-100 overflow-hidden">
+                        <div className="aspect-[940/788] bg-gray-100 overflow-hidden">
                           {first ? (
                             <img src={first} alt={it.name} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
                           ) : (
@@ -230,7 +233,7 @@ function Home() {
                         </div>
                       </Link>
                     ) : (
-                      <div className="aspect-square bg-gray-100 overflow-hidden">
+                      <div className="aspect-[940/788] bg-gray-100 overflow-hidden">
                         {first ? (
                           <img src={first} alt={it.name} className="w-full h-full object-cover" />
                         ) : (
