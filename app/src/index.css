@@ -614,11 +614,6 @@ h1, h2, h3, h4, h5, h6, .title {
 
 
 /* Medal badges (gold/silver/bronze) */
-.southpark-anim { animation: southparkMove 32s linear infinite; will-change: transform; }
-@keyframes southparkMove {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(200vw); }
-}
 /* Softer drop-in (less swing) */
 .animal-drop { 
   animation: animalDropIn 800ms cubic-bezier(.2,.85,.2,1) both, monkeyBounce 2s ease-in-out infinite; 
