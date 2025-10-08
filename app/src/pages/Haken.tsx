@@ -33,6 +33,8 @@ function Haken() {
   const [items, setItems] = useState<Item[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [headcategories, setHeadcategories] = useState<HeadCategory[]>([])
+  const [categoryItems, setCategoryItems] = useState<{[key: number]: Item[]}>({})
+  const [headcategoryItems, setHeadcategoryItems] = useState<{[key: number]: Item[]}>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const titleRef = useRef<HTMLHeadingElement>(null)
@@ -69,6 +71,8 @@ function Haken() {
 
         // Load items from all haken categories
         const allItems: Item[] = []
+        const categoryItemsMap: {[key: number]: Item[]} = {}
+        
         for (const cat of hakenCategories) {
           const itemsRes = await apiFetch(`/categories/${cat.id}/items`)
           const itemsData = await itemsRes.json()
@@ -79,6 +83,29 @@ function Haken() {
               category_id: cat.id
             }))
             allItems.push(...itemsWithCategory)
+            categoryItemsMap[cat.id] = itemsWithCategory
+          }
+        }
+
+        // Load items for headcategories (get linked categories first, then their items)
+        const headcategoryItemsMap: {[key: number]: Item[]} = {}
+        for (const headcat of hakenHeadcategories) {
+          const linkedCatsRes = await apiFetch(`/headcategories/${headcat.id}/categories`)
+          const linkedCatsData = await linkedCatsRes.json()
+          if (linkedCatsRes.ok) {
+            const headcatItems: Item[] = []
+            for (const linkedCat of linkedCatsData) {
+              const itemsRes = await apiFetch(`/categories/${linkedCat.id}/items`)
+              const itemsData = await itemsRes.json()
+              if (itemsRes.ok) {
+                const itemsWithCategory = itemsData.map((item: any) => ({
+                  ...item,
+                  category_id: linkedCat.id
+                }))
+                headcatItems.push(...itemsWithCategory)
+              }
+            }
+            headcategoryItemsMap[headcat.id] = headcatItems
           }
         }
 
@@ -91,6 +118,8 @@ function Haken() {
               setCategories(hakenCategories)
               setHeadcategories(hakenHeadcategories)
               setItems(sortedItems)
+              setCategoryItems(categoryItemsMap)
+              setHeadcategoryItems(headcategoryItemsMap)
             }
       } catch (e: any) {
         if (!cancelled) setError(e.message || 'Failed to load items')
@@ -154,38 +183,80 @@ function Haken() {
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {/* Headcategories */}
-              {headcategories.map((headcat) => (
-                <Link
-                  key={headcat.id}
-                  to={`/werkjes/haken/${headcat.slug}`}
-                  className="group block p-6 bg-white rounded-2xl border border-gray-200 shadow-md hover:shadow-xl transition-shadow"
-                >
-                  <h3 className="text-xl font-semibold mb-2 group-hover:text-blue-600 transition-colors">
-                    {headcat.name}
-                  </h3>
-                  <p className="text-gray-600 text-sm">
-                    Bekijk alle categorieën in deze collectie
-                  </p>
-                </Link>
-              ))}
+              {headcategories.map((headcat) => {
+                const headcatItems = headcategoryItems[headcat.id] || []
+                const firstItem = headcatItems.length > 0 ? headcatItems[0] : null
+                const firstImage = firstItem && Array.isArray(firstItem.images) && firstItem.images.length > 0 ? firstItem.images[0] : null
+                
+                return (
+                  <Link
+                    key={headcat.id}
+                    to={`/werkjes/haken/${headcat.slug}`}
+                    className="group block rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-md hover:shadow-xl transition-shadow"
+                  >
+                    <div className="aspect-[940/788] bg-gray-100 overflow-hidden">
+                      {firstImage ? (
+                        <img
+                          src={firstImage}
+                          alt={headcat.name}
+                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-400">
+                          Geen afbeelding
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-4">
+                      <h3 className="text-xl font-semibold mb-2 group-hover:text-blue-600 transition-colors">
+                        {headcat.name}
+                      </h3>
+                      <p className="text-gray-600 text-sm">
+                        Bekijk alle categorieën in deze collectie
+                      </p>
+                    </div>
+                  </Link>
+                )
+              })}
               
               {/* Standalone categories (not linked to headcategories) */}
               {categories
                 .filter(cat => !cat.headcategory_id)
-                .map((category) => (
-                  <Link
-                    key={category.id}
-                    to={`/werkjes/haken/${category.slug}`}
-                    className="group block p-6 bg-white rounded-2xl border border-gray-200 shadow-md hover:shadow-xl transition-shadow"
-                  >
-                    <h3 className="text-xl font-semibold mb-2 group-hover:text-blue-600 transition-colors">
-                      {category.name}
-                    </h3>
-                    <p className="text-gray-600 text-sm">
-                      Bekijk alle items in deze categorie
-                    </p>
-                  </Link>
-                ))}
+                .map((category) => {
+                  const catItems = categoryItems[category.id] || []
+                  const firstItem = catItems.length > 0 ? catItems[0] : null
+                  const firstImage = firstItem && Array.isArray(firstItem.images) && firstItem.images.length > 0 ? firstItem.images[0] : null
+                  
+                  return (
+                    <Link
+                      key={category.id}
+                      to={`/werkjes/haken/${category.slug}`}
+                      className="group block rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-md hover:shadow-xl transition-shadow"
+                    >
+                      <div className="aspect-[940/788] bg-gray-100 overflow-hidden">
+                        {firstImage ? (
+                          <img
+                            src={firstImage}
+                            alt={category.name}
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-400">
+                            Geen afbeelding
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-4">
+                        <h3 className="text-xl font-semibold mb-2 group-hover:text-blue-600 transition-colors">
+                          {category.name}
+                        </h3>
+                        <p className="text-gray-600 text-sm">
+                          Bekijk alle items in deze categorie
+                        </p>
+                      </div>
+                    </Link>
+                  )
+                })}
             </div>
           </div>
         </section>

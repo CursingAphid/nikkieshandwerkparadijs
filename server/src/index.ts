@@ -620,6 +620,22 @@ app.get('/api/headcategories', async (_req, res) => {
   }
 });
 
+// Get single headcategory
+app.get('/api/headcategories/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_KEY!);
+    const { data, error } = await supabase.from('headcategories').select('*').eq('id', id).single();
+    if (error) { res.status(500).json({ error: error.message }); return; }
+    if (!data) { res.status(404).json({ error: 'Headcategory not found' }); return; }
+    res.json(data);
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error(e);
+    res.status(500).json({ error: 'Get headcategory failed' });
+  }
+});
+
 // Create headcategory
 app.post('/api/headcategories', requireAdmin, upload.single('headimage'), async (req, res) => {
   try {

@@ -24,8 +24,10 @@ function AdminHeader() {
       <div className="ml-3 flex gap-2">
         {link('/admin', 'Dashboard')}
         {link('/admin/categories', 'Categories')}
+        {link('/admin/headcategories', 'Head Categories')}
         {link('/admin/items', 'Items')}
         {link('/admin/categories/new', 'New Category')}
+        {link('/admin/headcategories/new', 'New Head Category')}
         {link('/admin/items/new', 'New Item')}
       </div>
       <div className="ml-auto">

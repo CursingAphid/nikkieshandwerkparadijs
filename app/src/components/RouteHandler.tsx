@@ -12,7 +12,7 @@ type HeadCategory = {
 }
 
 function RouteHandler() {
-  const { type, param1, param2, param3 } = useParams<{ 
+  const { param1, param2, param3 } = useParams<{ 
     type: string; 
     param1: string; 
     param2?: string; 

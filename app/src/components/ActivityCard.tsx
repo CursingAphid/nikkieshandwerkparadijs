@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 
 type ActivityCardProps = {
-  type: 'item' | 'category'
+  type: 'item' | 'category' | 'headcategory'
   id: number
   name: string
   slug?: string
@@ -36,6 +36,8 @@ function ActivityCard({
           <div className="flex items-center gap-2 mb-2">
             {type === 'item' ? (
               <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">📦 Item</span>
+            ) : type === 'headcategory' ? (
+              <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">🏷️ Head Category</span>
             ) : (
               <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
                 {showCraftType && craftType ? (
@@ -48,7 +50,7 @@ function ActivityCard({
           </div>
           <div className="font-semibold text-lg mb-2">{name}</div>
           
-          {type === 'category' && slug && (
+          {(type === 'category' || type === 'headcategory') && slug && (
             <div className="text-sm text-gray-500 mb-2">{slug}</div>
           )}
           
@@ -80,11 +82,11 @@ function ActivityCard({
             </div>
           )}
           
-          {type === 'category' && headimageurl && (
+          {(type === 'category' || type === 'headcategory') && headimageurl && (
             <div className="mb-2">
               <img 
                 src={headimageurl} 
-                alt="category" 
+                alt={type === 'headcategory' ? 'headcategory' : 'category'} 
                 className="w-16 h-16 object-cover rounded"
               />
             </div>
@@ -101,7 +103,7 @@ function ActivityCard({
               ) : 'View'}
             </Link>
           )}
-          <Link className="btn" to={`/admin/${type === 'item' ? 'items' : 'categories'}/${id}/edit`} title="Bewerken">
+          <Link className="btn" to={`/admin/${type === 'item' ? 'items' : type === 'headcategory' ? 'headcategories' : 'categories'}/${id}/edit`} title="Bewerken">
             {useIcons ? (
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
                 <path d="M12 20h9"/>

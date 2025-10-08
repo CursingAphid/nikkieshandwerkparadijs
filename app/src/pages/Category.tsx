@@ -207,7 +207,6 @@ function Category() {
           backgroundPosition: 'center'
         }}
       >
-        <div className="absolute inset-0 bg-black bg-opacity-30"></div>
         <h1 
           className="text-3xl md:text-4xl lg:text-5xl font-bold text-white text-center relative z-10" 
           style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}
