@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { apiFetch } from '../lib/api'
+import { OptimizedFileUpload } from '../components/OptimizedFileUpload'
 
 type HeadCategory = {
   id: number
@@ -138,11 +139,15 @@ function EditHeadCategory() {
                   <p className="text-sm text-gray-600 mt-1">Current image</p>
                 </div>
               )}
-              <input 
-                type="file" 
-                accept="image/*" 
-                onChange={(e) => setHeadimage(e.target.files?.[0] || null)}
-                className="input"
+              <OptimizedFileUpload
+                onFileSelect={(file) => setHeadimage(file)}
+                maxSizeMB={5}
+                optimizationOptions={{
+                  maxWidth: 1920,
+                  maxHeight: 1920,
+                  quality: 0.8,
+                  format: 'jpeg'
+                }}
               />
               <p className="text-sm text-gray-600 mt-1">
                 {headimage ? 'New image selected' : 'Leave empty to keep current image'}

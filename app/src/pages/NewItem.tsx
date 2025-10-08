@@ -1,6 +1,7 @@
 import { apiUrl } from '../lib/api'
 import { useEffect, useState } from 'react'
 import { apiFetch } from '../lib/api'
+import { OptimizedFileUpload } from '../components/OptimizedFileUpload'
 
 function NewItem() {
   const [name, setName] = useState('')
@@ -68,13 +69,15 @@ function NewItem() {
           </div>
           <div style={{ marginBottom: 16 }}>
             <label className="label">Images</label>
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={e => {
-                const next = Array.from(e.target.files || [])
-                setImages(prev => [...prev, ...next])
+            <OptimizedFileUpload
+              onMultipleFilesSelect={(files) => setImages(prev => [...prev, ...files])}
+              multiple={true}
+              maxSizeMB={5}
+              optimizationOptions={{
+                maxWidth: 1920,
+                maxHeight: 1920,
+                quality: 0.8,
+                format: 'jpeg'
               }}
             />
           </div>

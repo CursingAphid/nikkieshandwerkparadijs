@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { apiFetch } from '../lib/api'
+import { OptimizedFileUpload } from '../components/OptimizedFileUpload'
 
 type Category = {
   id: number
@@ -268,11 +269,15 @@ function EditCategory() {
                   </button>
                 </div>
               )}
-              <input 
-                type="file" 
-                accept="image/*" 
-                onChange={(e) => setHeadimage(e.target.files?.[0] || null)}
-                className="input"
+              <OptimizedFileUpload
+                onFileSelect={(file) => setHeadimage(file)}
+                maxSizeMB={5}
+                optimizationOptions={{
+                  maxWidth: 1920,
+                  maxHeight: 1920,
+                  quality: 0.8,
+                  format: 'jpeg'
+                }}
               />
             </div>
             <button className="btn" disabled={saving}>

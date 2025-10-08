@@ -5,7 +5,7 @@ function AdminLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-gray-50">
       <AdminHeader />
-      <div className="p-4">
+      <div className="p-4 mt-16">
         {children}
       </div>
     </div>

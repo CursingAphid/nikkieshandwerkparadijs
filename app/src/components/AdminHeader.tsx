@@ -19,7 +19,7 @@ function AdminHeader() {
     </Link>
   )
   return (
-    <div className="sticky top-0 z-30 flex items-center gap-2 border-b border-gray-200 bg-gray-50 px-4 py-3">
+    <div className="fixed top-0 left-0 right-0 z-30 flex items-center gap-2 border-b border-gray-200 bg-gray-50 px-4 py-3">
       <div className="text-base font-semibold">Admin</div>
       <div className="ml-3 flex gap-2">
         {link('/admin', 'Dashboard')}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { apiFetch, apiUrl } from '../lib/api'
+import { OptimizedFileUpload } from '../components/OptimizedFileUpload'
 
 type Item = {
   id: string
@@ -109,7 +110,17 @@ function EditItem() {
           </div>
           <div style={{ marginBottom: 16 }}>
             <label className="label">Add Images</label>
-            <input type="file" accept="image/*" multiple onChange={e => setNewImages(Array.from(e.target.files || []))} />
+            <OptimizedFileUpload
+              onMultipleFilesSelect={(files) => setNewImages(prev => [...prev, ...files])}
+              multiple={true}
+              maxSizeMB={5}
+              optimizationOptions={{
+                maxWidth: 1920,
+                maxHeight: 1920,
+                quality: 0.8,
+                format: 'jpeg'
+              }}
+            />
           </div>
           {categories.length > 0 && (
             <div style={{ marginBottom: 16 }}>
