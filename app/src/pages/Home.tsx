@@ -175,7 +175,7 @@ function Home() {
                   </div>
                 </div>
                 <div className="flex justify-center md:justify-end items-stretch pb-6 md:py-12">
-                  <div ref={hakenImageRef} className="w-full max-w-xs md:max-w-sm h-full rounded-lg overflow-hidden fade-in-up" style={{ backgroundColor: '#5C2D3D' }}>
+                  <div ref={hakenImageRef} className="w-full max-w-xs md:max-w-sm h-full rounded-lg overflow-hidden fade-in-up" style={{ backgroundColor: '#f3f4f6' }}>
                     <img src={HaakIconn} alt="Haken" className="w-full h-full object-cover object-right" />
                   </div>
                 </div>
@@ -188,7 +188,7 @@ function Home() {
             <div className="mx-auto max-w-6xl px-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
                 <div className="flex justify-center md:justify-start items-stretch pb-6 md:py-12 order-2 md:order-1">
-                  <div ref={bordurenImageRef} className="w-full max-w-xs md:max-w-sm h-full rounded-lg overflow-hidden fade-in-up" style={{ backgroundColor: '#5C2D3D' }}>
+                  <div ref={bordurenImageRef} className="w-full max-w-xs md:max-w-sm h-full rounded-lg overflow-hidden fade-in-up" style={{ backgroundColor: '#f3f4f6' }}>
                     <img src={BorduurIconn} alt="Borduren" className="w-full h-full object-cover" />
                   </div>
                 </div>

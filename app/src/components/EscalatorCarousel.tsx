@@ -33,11 +33,11 @@ export function EscalatorCarousel({ images, className = '' }: EscalatorCarouselP
 
   const settings = {
     infinite: true,
-    speed: isMobile ? 240000 : 300000, // 4 minutes mobile, 5 minutes desktop
+    speed: isMobile ? 15000 : 20000, // 15 seconds mobile, 20 seconds desktop
     slidesToShow: 1,
     slidesToScroll: 1,
     autoplay: true,
-    autoplaySpeed: 0,
+    autoplaySpeed: 0, // Keep at 0 for continuous movement
     arrows: false,
     pauseOnHover: false,
     pauseOnFocus: false,
