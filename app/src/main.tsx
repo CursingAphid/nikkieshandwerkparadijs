@@ -21,6 +21,7 @@ import AdminItems from './pages/AdminItems.tsx'
 import AdminLayout from './components/AdminLayout.tsx'
 import PublicHeader from './components/PublicHeader.tsx'
 import Over from './pages/Over.tsx'
+import Contact from './pages/Contact.tsx'
 import Haken from './pages/Haken.tsx'
 import Borduren from './pages/Borduren.tsx'
 import RouteHandler from './components/RouteHandler.tsx'
@@ -40,6 +41,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/" element={<Home />} />
         <Route path="/build" element={<Build />} />
         <Route path="/over" element={<Over />} />
+        <Route path="/contact" element={<Contact />} />
             <Route path="/werkjes/haken" element={<Haken />} />
             <Route path="/werkjes/borduren" element={<Borduren />} />
         <Route path="/werkjes/:type/:param1/:param2/:param3" element={<RouteHandler />} />

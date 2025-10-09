@@ -4,6 +4,27 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom breakpoint for 830px */
+@media (max-width: 829px) {
+  .mobile-menu-830 {
+    display: block;
+  }
+  
+  .desktop-nav-830 {
+    display: none;
+  }
+}
+
+@media (min-width: 830px) {
+  .mobile-menu-830 {
+    display: none;
+  }
+  
+  .desktop-nav-830 {
+    display: flex;
+  }
+}
+
 :root {
   --bg: #f8fafc;
   --text: #0f172a;

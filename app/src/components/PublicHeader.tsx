@@ -46,11 +46,37 @@ function PublicHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
   const [hoveredNavItem, setHoveredNavItem] = useState<string | null>(null)
+  const [hoverTimeout, setHoverTimeout] = useState<number | null>(null)
   const [expandedHeadcategories, setExpandedHeadcategories] = useState<Set<number>>(new Set())
   const [headcategorySubcategories, setHeadcategorySubcategories] = useState<{[key: number]: Category[]}>({})
   const searchRef = useRef<HTMLDivElement>(null)
 
   const is = (p: string) => loc.pathname === p
+
+  // Handle hover with delay for better UX
+  const handleMouseEnter = (label: string) => {
+    if (hoverTimeout) {
+      clearTimeout(hoverTimeout)
+      setHoverTimeout(null)
+    }
+    setHoveredNavItem(label)
+  }
+
+  const handleMouseLeave = () => {
+    const timeout = setTimeout(() => {
+      setHoveredNavItem(null)
+    }, 150) // 150ms delay
+    setHoverTimeout(timeout)
+  }
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (hoverTimeout) {
+        clearTimeout(hoverTimeout)
+      }
+    }
+  }, [hoverTimeout])
   const link = (to: string, label: string) => (
     <Link
       to={to}
@@ -250,8 +276,8 @@ function PublicHeader() {
     return (
       <div 
         className="relative flex items-center"
-        onMouseEnter={() => hasDropdown && setHoveredNavItem(label)}
-        onMouseLeave={() => hasDropdown && setHoveredNavItem(null)}
+        onMouseEnter={() => hasDropdown && handleMouseEnter(label)}
+        onMouseLeave={() => hasDropdown && handleMouseLeave()}
       >
         <Link
           to={to}
@@ -262,13 +288,19 @@ function PublicHeader() {
         
         {/* Dropdown Menu */}
         {hasDropdown && hoveredNavItem === label && dropdownData && (
-          <div className="absolute top-full left-0 w-64 bg-white border border-gray-200 rounded-lg shadow-xl z-[70]">
+          <div 
+            className="absolute top-full left-0 w-64 bg-white/95 backdrop-blur-sm border border-gray-200 rounded-lg shadow-xl z-[70] mt-1"
+            onMouseEnter={() => handleMouseEnter(label)}
+            onMouseLeave={handleMouseLeave}
+          >
+            {/* Connection line to header */}
+            <div className="absolute -top-1 left-4 w-2 h-2 bg-white/95 backdrop-blur-sm border-l border-t border-gray-200 transform rotate-45"></div>
             <div className="py-2">
               {dropdownData.map((item) => (
                 <div key={item.id}>
                   {item.isHeadcategory ? (
                     <div>
-                      <div className="flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                      <div className="flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150">
                         <Link
                           to={`/werkjes/${label.toLowerCase()}/${item.slug}`}
                           className="flex-1"
@@ -276,7 +308,7 @@ function PublicHeader() {
                           {item.name}
                         </Link>
                         <button
-                          className="ml-2 p-1 text-gray-400 hover:text-gray-600"
+                          className="ml-2 p-1 text-gray-400 hover:text-gray-600 transition-colors duration-150"
                           onClick={(e) => {
                             e.preventDefault()
                             toggleHeadcategory(item.id)
@@ -301,7 +333,7 @@ function PublicHeader() {
                             <Link
                               key={subcat.id}
                               to={`/werkjes/${label.toLowerCase()}/${item.slug}/${subcat.slug}`}
-                              className="block px-2 py-1 text-sm text-gray-600 hover:bg-gray-50 rounded"
+                              className="block px-2 py-1 text-sm text-gray-600 hover:bg-gray-50 rounded transition-colors duration-150"
                             >
                               {subcat.name}
                             </Link>
@@ -312,7 +344,7 @@ function PublicHeader() {
                   ) : (
                     <Link
                       to={`/werkjes/${label.toLowerCase()}/${item.slug}`}
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150"
                     >
                       {item.name}
                     </Link>
@@ -343,8 +375,8 @@ function PublicHeader() {
           
           {/* Right side elements */}
           <div className="flex items-center gap-3">
-            {/* Search Bar - Hidden on mobile */}
-            <div ref={searchRef} className="relative w-80 hidden lg:block">
+            {/* Search Bar - Hidden on mobile, becomes icon at 1120px */}
+            <div ref={searchRef} className="relative w-80 hidden xl:block">
               <div className="relative">
                 <input
                   type="text"
@@ -418,10 +450,27 @@ function PublicHeader() {
               )}
             </div>
 
+            {/* Desktop Search Icon - Shows between lg and xl */}
+            <button
+              onClick={() => setMobileSearchOpen(true)}
+              className="hidden lg:block xl:hidden p-2 rounded-md text-gray-700 hover:bg-gray-100"
+              aria-label="Search"
+            >
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </button>
+
             {/* Mobile Search Button */}
             <button
               onClick={() => setMobileSearchOpen(true)}
-              className="lg:hidden p-2 rounded-md text-gray-700 hover:bg-gray-100"
+              className="block lg:hidden p-2 rounded-md text-gray-700 hover:bg-gray-100"
               aria-label="Search"
             >
               <svg
@@ -436,11 +485,12 @@ function PublicHeader() {
             </button>
 
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex gap-2">
+            <nav className="desktop-nav-830 gap-2">
               {link('/', 'Home')}
               {navLink('/werkjes/haken', 'Haken', true)}
               {navLink('/werkjes/borduren', 'Borduren', true)}
               {link('/over', 'Over')}
+              {link('/contact', 'Contact')}
               {link('/build', 'Stel je eigen set samen')}
             </nav>
 
@@ -451,7 +501,7 @@ function PublicHeader() {
                 e.stopPropagation()
                 setMobileMenuOpen(!mobileMenuOpen)
               }}
-              className="md:hidden p-2 rounded-md text-gray-700 hover:bg-gray-100 touch-manipulation"
+              className="mobile-menu-830 p-2 rounded-md text-gray-700 hover:bg-gray-100 touch-manipulation"
               aria-label="Toggle menu"
               type="button"
             >
@@ -474,7 +524,7 @@ function PublicHeader() {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-gray-200 bg-white">
+          <div className="mobile-menu-830 border-t border-gray-200 bg-white">
             <div className="px-4 py-2 space-y-1">
               {/* Mobile Navigation Links */}
               <Link
@@ -645,6 +695,13 @@ function PublicHeader() {
                 className={`block px-3 py-2 rounded-md text-sm font-medium ${is('/over') ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-100'}`}
               >
                 Over
+              </Link>
+              <Link
+                to="/contact"
+                onClick={() => setMobileMenuOpen(false)}
+                className={`block px-3 py-2 rounded-md text-sm font-medium ${is('/contact') ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-100'}`}
+              >
+                Contact
               </Link>
               <Link
                 to="/build"

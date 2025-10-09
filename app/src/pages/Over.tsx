@@ -1,4 +1,5 @@
 import { useRef, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import OverBanner from '../assets/banners/over_banner.png';
 import NicoleOnScooter from '../assets/over/nicole_op_scooter.png';
 
@@ -48,84 +49,64 @@ function Over() {
       </section>
 
       <div className="mx-auto max-w-6xl px-4 py-8">
-      {/* Wie ben ik? Section */}
-      <div className="mb-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-          {/* Text Column */}
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold mb-6">Wie ben ik?</h1>
+        {/* Wie ben ik? Section */}
+        <div className="mb-16">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            {/* Text Column */}
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold mb-6">Wie ben ik?</h1>
+              
+              <div className="prose prose-lg max-w-none">
+                <p className="text-gray-700 text-lg leading-relaxed mb-6">
+                  Ik ben Nicole Albertz en woon in Kerkrade samen met mijn gezin en onze hond Bailey. 
+                  Ik werk in een verzekeringskantoor, maar vind mijn rust en ontspanning in het haken en borduren.
+                </p>
+                
+                <p className="text-gray-700 text-lg leading-relaxed mb-6">
+                  Jaren geleden ben ik begonnen met het maken van simpele haakwerkjes. Ik heb het vak geleerd 
+                  en maak nu vol enthousiasme veel verschillende items die ik graag wil delen.
+                </p>
+                
+                <p className="text-gray-700 text-lg leading-relaxed mb-6">
+                  Mijn favoriete bezigheid is het maken van knuffels en kraamcadeaus zoals babydoekjes, 
+                  rammelaars, speenkettingen en slabbetjes.
+                </p>
+              </div>
+            </div>
             
-            <div className="prose prose-lg max-w-none">
-              <p className="text-gray-700 text-lg leading-relaxed mb-6">
-                Ik ben Nicole Albertz en woon in Kerkrade samen met mijn gezin en onze hond Bailey. 
-                Ik werk in een verzekeringskantoor, maar vind mijn rust en ontspanning in het haken en borduren.
-              </p>
-              
-              <p className="text-gray-700 text-lg leading-relaxed mb-6">
-                Jaren geleden ben ik begonnen met het maken van simpele haakwerkjes. Ik heb het vak geleerd 
-                en maak nu vol enthousiasme veel verschillende items die ik graag wil delen.
-              </p>
-              
-              <p className="text-gray-700 text-lg leading-relaxed mb-6">
-                Mijn favoriete bezigheid is het maken van knuffels en kraamcadeaus zoals babydoekjes, 
-                rammelaars, speenkettingen en slabbetjes.
-              </p>
+            {/* Image Column */}
+            <div>
+              <div className="relative">
+                <img 
+                  src={NicoleOnScooter} 
+                  alt="Nicole op de scooter met knuffels en kraamcadeaus" 
+                  className="w-full max-w-md md:max-w-none h-auto rounded-2xl shadow-lg mx-auto md:mx-0"
+                />
+              </div>
             </div>
           </div>
-          
-              {/* Image Column */}
-              <div>
-                <div className="relative">
-                  <img 
-                    src={NicoleOnScooter} 
-                    alt="Nicole op de scooter met knuffels en kraamcadeaus" 
-                    className="w-full max-w-md md:max-w-none h-auto rounded-2xl shadow-lg mx-auto md:mx-0"
-                  />
-                </div>
-              </div>
         </div>
-      </div>
 
-      {/* Existing content */}
-      <div className="mb-12">
-        <h2 className="text-2xl font-bold mb-4 mt-8">Wat ik doe</h2>
-        <p className="text-gray-700 text-lg leading-relaxed mb-6">
-          Ik ben gespecialiseerd in twee ambachten:
-        </p>
-        
-        <div className="grid md:grid-cols-2 gap-8 mb-8">
-          <div className="bg-gray-50 p-6 rounded-lg">
-            <h3 className="text-xl font-bold mb-3">Haken</h3>
-            <p className="text-gray-700 leading-relaxed">
-              Het haken van knuffels en kraamcadeaus is mijn passie. Elk stuk wordt met de hand gemaakt 
-              en kan volledig gepersonaliseerd worden naar jouw wensen. Van schattige amigurumi tot praktische 
-              babyartikelen - alles is mogelijk!
-            </p>
-          </div>
-          
-          <div className="bg-gray-50 p-6 rounded-lg">
-            <h3 className="text-xl font-bold mb-3">Borduren</h3>
-            <p className="text-gray-700 leading-relaxed">
-              Met borduren voeg ik een persoonlijk tintje toe aan textiel. Of het nu gaat om een naam op een 
-              badjasje, een leuke afbeelding op een handdoek of een speciaal patroon op een dierendeken - 
-              elk geborduurde item is uniek en blijft lang mooi.
-            </p>
-          </div>
-        </div>
-        
-        <h2 className="text-2xl font-bold mb-4 mt-8">Contact</h2>
-        <p className="text-gray-700 text-lg leading-relaxed mb-6">
-          Heb je vragen over een product of wil je een speciale bestelling plaatsen? Neem gerust contact 
-          met mij op! Ik help je graag verder met het realiseren van jouw unieke handwerk.
-        </p>
-        
-        <div className="bg-blue-50 p-6 rounded-lg mt-8">
-          <p className="text-gray-700">
-            <strong>Let op:</strong> Alle producten worden met de hand gemaakt en op bestelling geproduceerd. 
-            Levertijden kunnen variëren afhankelijk van de complexiteit van het project en mijn huidige werkvoorraad.
+        {/* Contact Section */}
+        <div className="mb-12">
+          <h2 className="text-2xl font-bold mb-4 mt-8">Contact</h2>
+          <p className="text-gray-700 text-lg leading-relaxed mb-6">
+            Heb je vragen over een product of wil je een speciale bestelling plaatsen? Neem gerust contact 
+            met mij op! Ik help je graag verder met het realiseren van jouw unieke handwerk.
           </p>
+          
+          <div className="mb-6">
+            <Link 
+              to="/contact" 
+              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-300 font-semibold"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              <span>Neem contact op</span>
+            </Link>
+          </div>
         </div>
-      </div>
       </div>
 
       {/* Footer */}
