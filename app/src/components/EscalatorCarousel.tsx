@@ -10,6 +10,7 @@ interface EscalatorCarouselProps {
 
 export function EscalatorCarousel({ images, className = '' }: EscalatorCarouselProps) {
   const [isMobile, setIsMobile] = useState(false)
+  const [imagesLoaded, setImagesLoaded] = useState(false)
 
   useEffect(() => {
     const checkMobile = () => {
@@ -20,6 +21,32 @@ export function EscalatorCarousel({ images, className = '' }: EscalatorCarouselP
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
+
+  // Preload images to ensure smooth animation
+  useEffect(() => {
+    let loadedCount = 0
+    const totalImages = images.length
+
+    if (totalImages === 0) {
+      setImagesLoaded(true)
+      return
+    }
+
+    const handleImageLoad = () => {
+      loadedCount++
+      if (loadedCount === totalImages) {
+        // Small delay to ensure all images are fully rendered
+        setTimeout(() => setImagesLoaded(true), 100)
+      }
+    }
+
+    images.forEach((url) => {
+      const img = new Image()
+      img.onload = handleImageLoad
+      img.onerror = handleImageLoad // Count errors as "loaded" to prevent hanging
+      img.src = url
+    })
+  }, [images])
 
   const settings = {
     infinite: true,
@@ -52,6 +79,7 @@ export function EscalatorCarousel({ images, className = '' }: EscalatorCarouselP
               src={url}
               alt="Escalator image"
               className="h-[180px] sm:h-[140px] md:h-[160px] lg:h-[200px] w-auto select-none pointer-events-none"
+              loading="eager"
             />
           </div>
         ))}
