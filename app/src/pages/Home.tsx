@@ -7,7 +7,7 @@ import MonkeyBench from '../assets/home/money.png'
 import Giraffe from '../assets/home/giraffe.png'
 import HaakIconn from '../assets/home/haakicoon.png'
 import BorduurIconn from '../assets/home/borduuricoon.png'
-import { EscalatorAnimation } from '../components/EscalatorAnimation'
+import { EscalatorCarousel } from '../components/EscalatorCarousel'
 
 type Item = {
   id: number
@@ -130,7 +130,7 @@ function Home() {
             ref={logoRef}
             src={Logo} 
             alt="Nikkie's Handwerk Paradijs" 
-            className="logo-pop-in w-56 md:w-72 lg:w-80 h-auto relative z-50" 
+            className="logo-pop-in w-72 md:w-72 lg:w-80 h-auto relative z-50" 
           />
           <div className="mt-4 md:mt-6 text-center text-white" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.85), 0 6px 16px rgba(0,0,0,0.35)' }}>
           </div>
@@ -138,14 +138,14 @@ function Home() {
         <img 
           src={MonkeyBench} 
           alt="Aap op bankje"
-          className="animal-drop absolute -top-2.5 right-[2%] md:right-[4%] lg:right-[6%] w-auto h-[140px] sm:h-[170px] md:h-[200px] lg:h-[250px] select-none pointer-events-none z-5"
+          className="animal-drop absolute -top-2.5 right-[2%] md:right-[4%] lg:right-[6%] w-auto h-[140px] sm:h-[170px] md:h-[200px] lg:h-[250px] select-none pointer-events-none z-5 hidden sm:block"
         />
         <img 
           src={Giraffe} 
           alt="Giraffe"
-          className="animal-drop-delayed absolute -top-2.5 left-[2%] md:left-[10%] lg:left-[12%] w-auto h-[160px] sm:h-[190px] md:h-[220px] lg:h-[270px] select-none pointer-events-none z-5"
+          className="animal-drop-delayed absolute -top-2.5 left-[2%] md:left-[10%] lg:left-[12%] w-auto h-[160px] sm:h-[190px] md:h-[220px] lg:h-[270px] select-none pointer-events-none z-5 hidden sm:block"
         />
-        <EscalatorAnimation images={escalatorUrls} />
+        <EscalatorCarousel images={escalatorUrls} />
       </section>
 
       <main className="mx-auto max-w-6xl px-4 pt-0">

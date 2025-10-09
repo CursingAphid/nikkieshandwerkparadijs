@@ -5,7 +5,11 @@ export default {
     './src/**/*.{ts,tsx,js,jsx}',
   ],
   theme: {
-    extend: {},
+    extend: {
+      animation: {
+        'scroll-left': 'scroll-left 35s linear infinite',
+      },
+    },
   },
   plugins: [],
 }

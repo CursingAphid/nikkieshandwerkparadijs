@@ -643,6 +643,24 @@ h1, h2, h3, h4, h5, h6, .title {
   50% { transform: translateY(-15px); }
   100% { transform: translateY(0); }
 }
+
+/* Escalator slide-in animation (opposite direction from animals) */
+.escalator-slide-in { 
+  animation: escalatorSlideIn 1000ms cubic-bezier(.2,.85,.2,1) both; 
+  animation-delay: 200ms;
+  will-change: transform, opacity; 
+}
+
+@keyframes escalatorSlideIn {
+  0% { transform: translateY(10%) scale(.99); opacity: 0; }
+  60% { transform: translateY(-3px); opacity: 1; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+@keyframes scroll-right {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(0%); }
+}
 .medal-badge {
   position: absolute;
   top: 8px;
