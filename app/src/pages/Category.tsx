@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { apiFetch } from '../lib/api'
 import HakenBanner from '../assets/banners/haken_banner.png'
 import BordurenBanner from '../assets/banners/borduren_banner.png'
+import { ImageSlideshow } from '../components/ImageSlideshow'
 
 type Item = {
   id: number
@@ -22,6 +23,7 @@ type Category = {
   description: string | null
   type: string | null
   firstImage?: string | null
+  images?: string[]
 }
 
 type HeadCategory = {
@@ -128,16 +130,22 @@ function Category() {
           if (linkedCatsRes.ok && linkedCatsData.length > 0) {
             setLinkedCategories(linkedCatsData)
             
-            // Get first image from each linked category for display
+            // Get multiple images from each linked category for display
             const categoryImagePromises = linkedCatsData.map(async (cat: Category) => {
               const itemsRes = await apiFetch(`/categories/${cat.id}/items`)
               const items = await itemsRes.json()
               if (itemsRes.ok && items.length > 0) {
-                const firstItem = items[0]
-                const firstImage = Array.isArray(firstItem.images) && firstItem.images.length > 0 ? firstItem.images[0] : null
-                return { ...cat, firstImage }
+                // Collect images from multiple items in this category
+                const categoryImages: string[] = []
+                items.forEach((item: any) => {
+                  if (Array.isArray(item.images) && item.images.length > 0) {
+                    // Take first image from each item
+                    categoryImages.push(item.images[0])
+                  }
+                })
+                return { ...cat, firstImage: categoryImages[0] || null, images: categoryImages }
               }
-              return { ...cat, firstImage: null }
+              return { ...cat, firstImage: null, images: [] }
             })
             
             const categoriesWithImages = await Promise.all(categoryImagePromises)
@@ -251,11 +259,15 @@ function Category() {
                     className="group block rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-md hover:shadow-xl transition-shadow"
                   >
                     <div className="aspect-[940/788] bg-gray-100 overflow-hidden">
-                      {linkedCategory.firstImage ? (
-                        <img
-                          src={linkedCategory.firstImage}
+                      {linkedCategory.images && linkedCategory.images.length > 0 ? (
+                        <ImageSlideshow
+                          images={linkedCategory.images}
                           alt={linkedCategory.name}
-                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          className="transition-transform duration-300 group-hover:scale-105"
+                          autoPlay={true}
+                          autoPlayInterval={3000}
+                          showDots={true}
+                          showArrows={true}
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-400">
@@ -287,7 +299,6 @@ function Category() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {items.map((item) => {
-                const first = Array.isArray(item.images) && item.images.length > 0 ? item.images[0] : null
                 const itemHref = type ? (headcategory ? `/werkjes/${type}/${headcategory.slug}/${category.slug}/${slugify(item.name)}` : `/werkjes/${type}/${category.slug}/${slugify(item.name)}`) : '#'
                 
                 return (
@@ -297,17 +308,15 @@ function Category() {
                     className="group block rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-md hover:shadow-xl transition-shadow"
                   >
                     <div className="aspect-[940/788] bg-gray-100 overflow-hidden">
-                      {first ? (
-                        <img
-                          src={first}
-                          alt={item.name}
-                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-400">
-                          Geen afbeelding
-                        </div>
-                      )}
+                      <ImageSlideshow
+                        images={Array.isArray(item.images) ? item.images : []}
+                        alt={item.name}
+                        className="transition-transform duration-300 group-hover:scale-105"
+                        autoPlay={true}
+                        autoPlayInterval={4000}
+                        showDots={true}
+                        showArrows={true}
+                      />
                     </div>
                     <div className="p-4">
                       <h3 className="font-semibold text-lg mb-2 line-clamp-2">

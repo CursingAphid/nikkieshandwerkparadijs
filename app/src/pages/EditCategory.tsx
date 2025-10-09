@@ -10,6 +10,7 @@ type Category = {
   description: string | null
   type: string | null
   headimageurl: string | null
+  headcategory_id?: number | null
   created_at: string
 }
 
@@ -66,8 +67,12 @@ function EditCategory() {
           setHeadcategories(headcategoriesJson)
           
           // Check if this category belongs to a headcategory
-          // For now, we'll assume it doesn't (this would need backend support to check)
-          setBelongsToHeadcategory(false)
+          if (category.headcategory_id) {
+            setBelongsToHeadcategory(true)
+            setHeadcategoryId(category.headcategory_id)
+          } else {
+            setBelongsToHeadcategory(false)
+          }
         }
       } catch (e: any) {
         if (!cancelled) setError(e.message || 'Failed to load category')

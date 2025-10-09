@@ -82,11 +82,24 @@ function ActivityCard({
             </div>
           )}
           
-          {(type === 'category' || type === 'headcategory') && headimageurl && (
+          {type === 'headcategory' && Array.isArray(images) && images.length > 0 && (
+            <div className="flex gap-2 flex-wrap">
+              {images.slice(0, 4).map((url) => (
+                <img 
+                  key={url} 
+                  src={url} 
+                  alt="headcategory" 
+                  className="w-16 h-16 object-cover rounded"
+                />
+              ))}
+            </div>
+          )}
+          
+          {type === 'category' && headimageurl && (
             <div className="mb-2">
               <img 
                 src={headimageurl} 
-                alt={type === 'headcategory' ? 'headcategory' : 'category'} 
+                alt="category" 
                 className="w-16 h-16 object-cover rounded"
               />
             </div>
