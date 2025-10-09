@@ -446,9 +446,14 @@ function PublicHeader() {
 
             {/* Mobile Menu Button */}
             <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-md text-gray-700 hover:bg-gray-100"
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                setMobileMenuOpen(!mobileMenuOpen)
+              }}
+              className="md:hidden p-2 rounded-md text-gray-700 hover:bg-gray-100 touch-manipulation"
               aria-label="Toggle menu"
+              type="button"
             >
               <svg
                 className="w-6 h-6"
@@ -506,10 +511,22 @@ function PublicHeader() {
                                   {item.name}
                                 </Link>
                                 <button
-                                  className="ml-2 p-1 text-gray-400 hover:text-gray-600"
-                                  onClick={() => toggleHeadcategory(item.id)}
+                                  className="ml-2 p-1 text-gray-400 hover:text-gray-600 touch-manipulation"
+                                  onClick={(e) => {
+                                    e.preventDefault()
+                                    e.stopPropagation()
+                                    toggleHeadcategory(item.id)
+                                  }}
+                                  type="button"
+                                  aria-label={`Toggle ${item.name} submenu`}
                                 >
-                                  <span className={`transition-transform duration-200 ${expandedHeadcategories.has(item.id) ? 'rotate-90' : ''}`}>
+                                  <span 
+                                    className="transition-transform duration-200"
+                                    style={{ 
+                                      transform: expandedHeadcategories.has(item.id) ? 'rotate(90deg)' : 'rotate(0deg)',
+                                      display: 'inline-block'
+                                    }}
+                                  >
                                     ▶
                                   </span>
                                 </button>
@@ -571,10 +588,22 @@ function PublicHeader() {
                                   {item.name}
                                 </Link>
                                 <button
-                                  className="ml-2 p-1 text-gray-400 hover:text-gray-600"
-                                  onClick={() => toggleHeadcategory(item.id)}
+                                  className="ml-2 p-1 text-gray-400 hover:text-gray-600 touch-manipulation"
+                                  onClick={(e) => {
+                                    e.preventDefault()
+                                    e.stopPropagation()
+                                    toggleHeadcategory(item.id)
+                                  }}
+                                  type="button"
+                                  aria-label={`Toggle ${item.name} submenu`}
                                 >
-                                  <span className={`transition-transform duration-200 ${expandedHeadcategories.has(item.id) ? 'rotate-90' : ''}`}>
+                                  <span 
+                                    className="transition-transform duration-200"
+                                    style={{ 
+                                      transform: expandedHeadcategories.has(item.id) ? 'rotate(90deg)' : 'rotate(0deg)',
+                                      display: 'inline-block'
+                                    }}
+                                  >
                                     ▶
                                   </span>
                                 </button>

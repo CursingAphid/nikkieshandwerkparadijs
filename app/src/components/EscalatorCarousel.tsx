@@ -10,7 +10,6 @@ interface EscalatorCarouselProps {
 
 export function EscalatorCarousel({ images, className = '' }: EscalatorCarouselProps) {
   const [isMobile, setIsMobile] = useState(false)
-  const [imagesLoaded, setImagesLoaded] = useState(false)
 
   useEffect(() => {
     const checkMobile = () => {
@@ -24,26 +23,10 @@ export function EscalatorCarousel({ images, className = '' }: EscalatorCarouselP
 
   // Preload images to ensure smooth animation
   useEffect(() => {
-    let loadedCount = 0
-    const totalImages = images.length
-
-    if (totalImages === 0) {
-      setImagesLoaded(true)
-      return
-    }
-
-    const handleImageLoad = () => {
-      loadedCount++
-      if (loadedCount === totalImages) {
-        // Small delay to ensure all images are fully rendered
-        setTimeout(() => setImagesLoaded(true), 100)
-      }
-    }
+    if (images.length === 0) return
 
     images.forEach((url) => {
       const img = new Image()
-      img.onload = handleImageLoad
-      img.onerror = handleImageLoad // Count errors as "loaded" to prevent hanging
       img.src = url
     })
   }, [images])
