@@ -46,6 +46,8 @@ function Category() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  console.log(`Category page: /werkjes/${type}/${param1}${param2 ? `/${param2}` : ''}`)
+
   // Helper function to create slug from name
   const slugify = (text: string) => {
     return text
@@ -77,22 +79,28 @@ function Category() {
         let foundHeadcategory = null
         
         // Determine URL structure based on parameters
-        const isParam1Headcategory = headcatsData.some((hc: HeadCategory) => hc.slug === param1)
+        const isParam1Headcategory = headcatsData.some((hc: HeadCategory) => hc.slug === param1 && hc.type === type)
         
         if (param2) {
           // 3 parameters: /werkjes/type/headcategory/category
+          console.log(`3-param URL: looking for headcategory "${param1}" and subcategory "${param2}"`)
           if (isParam1Headcategory) {
             // Find the headcategory first
-            foundHeadcategory = headcatsData.find((hc: HeadCategory) => hc.slug === param1)
+            foundHeadcategory = headcatsData.find((hc: HeadCategory) => hc.slug === param1 && hc.type === type)
+            console.log(`Found headcategory:`, foundHeadcategory)
             
             if (foundHeadcategory) {
               // Get categories linked to this headcategory
               const linkedCatsRes = await apiFetch(`/headcategories/${foundHeadcategory.id}/categories`)
               const linkedCatsData = await linkedCatsRes.json()
+              console.log(`Linked categories for "${param1}":`, linkedCatsData)
+              console.log(`Looking for subcategory slug: "${param2}"`)
+              console.log(`Available subcategory slugs:`, linkedCatsData.map((c: Category) => c.slug))
               
               if (linkedCatsRes.ok) {
                 // Find the specific category within this headcategory
                 foundCategory = linkedCatsData.find((c: Category) => c.slug === param2)
+                console.log(`Found subcategory "${param2}":`, foundCategory)
               }
             }
           }
@@ -100,7 +108,7 @@ function Category() {
           // 2 parameters: /werkjes/type/param1
           if (isParam1Headcategory) {
             // This is a headcategory page: /werkjes/type/headcategory
-            foundCategory = headcatsData.find((hc: HeadCategory) => hc.slug === param1)
+            foundCategory = headcatsData.find((hc: HeadCategory) => hc.slug === param1 && hc.type === type)
             foundHeadcategory = foundCategory // Set headcategory to the same data for link generation
             isHeadcategory = true
           } else {
@@ -110,6 +118,7 @@ function Category() {
         }
         
         if (!foundCategory) {
+          console.error(`ERROR: Category "${param1}" not found!`)
           throw new Error('Category not found')
         }
 
@@ -228,7 +237,7 @@ function Category() {
         {/* Category Info */}
         <div className="mb-12">
           {category.description && (
-            <p className="text-gray-700 text-lg leading-relaxed mb-4">
+            <p className="text-gray-700 text-lg leading-relaxed mb-4 whitespace-pre-wrap">
               {category.description}
             </p>
           )}
@@ -280,7 +289,7 @@ function Category() {
                         {linkedCategory.name}
                       </h3>
                       {linkedCategory.description && (
-                        <p className="text-gray-600 text-sm line-clamp-2">
+                        <p className="text-gray-600 text-sm line-clamp-2 whitespace-pre-wrap">
                           {linkedCategory.description}
                         </p>
                       )}

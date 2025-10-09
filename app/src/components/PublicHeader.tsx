@@ -234,11 +234,18 @@ function PublicHeader() {
 
   // Get dropdown data for a specific type (haken or borduren)
   const getDropdownData = (type: 'haken' | 'borduren') => {
+    console.log(`getDropdownData for ${type}:`)
+    console.log('All headcategories:', headcategories.map(hc => ({ name: hc.name, slug: hc.slug, type: hc.type })))
+    console.log('All categories:', categories.map(c => ({ name: c.name, slug: c.slug, type: c.type, headcategory_id: c.headcategory_id })))
+    
     const headcats = headcategories.filter(hc => hc.type === type)
     const standaloneCats = categories.filter(c => 
       c.type === type && 
       (c.headcategory_id === null || c.headcategory_id === undefined)
     )
+    
+    console.log(`Filtered headcategories for ${type}:`, headcats.map(hc => ({ name: hc.name, slug: hc.slug, type: hc.type })))
+    console.log(`Filtered standalone categories for ${type}:`, standaloneCats.map(c => ({ name: c.name, slug: c.slug, type: c.type })))
     
     // Create unified list with headcategories and standalone categories
     const unifiedList: CategoryWithSubcategories[] = []
@@ -266,6 +273,7 @@ function PublicHeader() {
       })
     })
     
+    console.log(`Final unified list for ${type}:`, unifiedList.map(item => ({ name: item.name, slug: item.slug, type: item.type, isHeadcategory: item.isHeadcategory })))
     return unifiedList
   }
 
@@ -555,7 +563,10 @@ function PublicHeader() {
                               <div className="px-3 py-1 text-xs text-gray-600 font-medium flex items-center justify-between">
                                 <Link
                                   to={`/werkjes/haken/${item.slug}`}
-                                  onClick={() => setMobileMenuOpen(false)}
+                                  onClick={() => {
+                                    console.log(`Mobile link: /werkjes/haken/${item.slug}`)
+                                    setMobileMenuOpen(false)
+                                  }}
                                   className="flex-1"
                                 >
                                   {item.name}
@@ -587,10 +598,13 @@ function PublicHeader() {
                                     <Link
                                       key={subcat.id}
                                       to={`/werkjes/haken/${item.slug}/${subcat.slug}`}
-                                      onClick={() => setMobileMenuOpen(false)}
+                                      onClick={() => {
+                                        console.log(`Mobile subcategory: /werkjes/haken/${item.slug}/${subcat.slug}`)
+                                        setMobileMenuOpen(false)
+                                      }}
                                       className="block px-3 py-1 text-xs text-gray-500 hover:text-gray-800"
                                     >
-                                      • {subcat.name}
+                                      {subcat.name}
                                     </Link>
                                   ))}
                                 </div>
@@ -599,10 +613,13 @@ function PublicHeader() {
                           ) : (
                             <Link
                               to={`/werkjes/haken/${item.slug}`}
-                              onClick={() => setMobileMenuOpen(false)}
+                              onClick={() => {
+                                console.log(`Mobile standalone: /werkjes/haken/${item.slug}`)
+                                setMobileMenuOpen(false)
+                              }}
                               className="block px-3 py-1 text-xs text-gray-600 hover:text-gray-800"
                             >
-                              • {item.name}
+                              {item.name}
                             </Link>
                           )}
                         </div>
@@ -667,7 +684,7 @@ function PublicHeader() {
                                       onClick={() => setMobileMenuOpen(false)}
                                       className="block px-3 py-1 text-xs text-gray-500 hover:text-gray-800"
                                     >
-                                      • {subcat.name}
+                                      {subcat.name}
                                     </Link>
                                   ))}
                                 </div>
@@ -679,7 +696,7 @@ function PublicHeader() {
                               onClick={() => setMobileMenuOpen(false)}
                               className="block px-3 py-1 text-xs text-gray-600 hover:text-gray-800"
                             >
-                              • {item.name}
+                              {item.name}
                             </Link>
                           )}
                         </div>

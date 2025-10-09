@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Slider from 'react-slick'
 import 'slick-carousel/slick/slick.css'
 import 'slick-carousel/slick/slick-theme.css'
@@ -10,16 +10,21 @@ interface EscalatorCarouselProps {
 
 export function EscalatorCarousel({ images, className = '' }: EscalatorCarouselProps) {
   const [isMobile, setIsMobile] = useState(false)
+  const [isInitialized, setIsInitialized] = useState(false)
 
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 425)
+      const newIsMobile = window.innerWidth <= 425
+      if (newIsMobile !== isMobile) {
+        setIsMobile(newIsMobile)
+      }
     }
     
     checkMobile()
+    setIsInitialized(true)
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
-  }, [])
+  }, [isMobile])
 
   // Preload images to ensure smooth animation
   useEffect(() => {
@@ -31,9 +36,10 @@ export function EscalatorCarousel({ images, className = '' }: EscalatorCarouselP
     })
   }, [images])
 
-  const settings = {
+  // Use consistent speed to prevent restart issues
+  const settings = useMemo(() => ({
     infinite: true,
-    speed: isMobile ? 15000 : 20000, // 15 seconds mobile, 20 seconds desktop
+    speed: 45000, // 45 seconds - very slow and gentle
     slidesToShow: 1,
     slidesToScroll: 1,
     autoplay: true,
@@ -48,6 +54,11 @@ export function EscalatorCarousel({ images, className = '' }: EscalatorCarouselP
     cssEase: 'linear',
     variableWidth: true,
     adaptiveHeight: false,
+  }), []) // Empty dependency array - settings never change
+
+  // Don't render until we know the screen size
+  if (!isInitialized) {
+    return null
   }
 
   return (

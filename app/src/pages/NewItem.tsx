@@ -9,8 +9,9 @@ function NewItem() {
   const [name, setName] = useState('')
   const [price, setPrice] = useState('')
   const [images, setImages] = useState<File[]>([])
-  const [categories, setCategories] = useState<{ id: number, name: string }[]>([])
+  const [categories, setCategories] = useState<{ id: number, name: string, type: string | null }[]>([])
   const [selectedCats, setSelectedCats] = useState<number[]>([])
+  const [typeFilter, setTypeFilter] = useState<string>('all') // 'all', 'haken', 'borduren'
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -50,6 +51,12 @@ function NewItem() {
     return () => { cancelled = true }
   }, [])
 
+  // Filter categories based on selected type
+  const filteredCategories = categories.filter(cat => {
+    if (typeFilter === 'all') return true
+    return cat.type === typeFilter
+  })
+
   return (
     <div className="container">
       <h1 className="title">New Item</h1>
@@ -83,8 +90,49 @@ function NewItem() {
           {categories.length > 0 && (
             <div style={{ marginBottom: 16 }}>
               <label className="label">Categories</label>
+              
+              {/* Type Filter */}
+              <div style={{ marginBottom: 12 }}>
+                <label style={{ display: 'block', marginBottom: 8, fontSize: '14px', fontWeight: '500' }}>
+                  Filter by type:
+                </label>
+                <div style={{ display: 'flex', gap: 12 }}>
+                  <label style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+                    <input
+                      type="radio"
+                      name="typeFilter"
+                      value="all"
+                      checked={typeFilter === 'all'}
+                      onChange={(e) => setTypeFilter(e.target.value)}
+                    />
+                    All Categories
+                  </label>
+                  <label style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+                    <input
+                      type="radio"
+                      name="typeFilter"
+                      value="haken"
+                      checked={typeFilter === 'haken'}
+                      onChange={(e) => setTypeFilter(e.target.value)}
+                    />
+                    Haken Only
+                  </label>
+                  <label style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+                    <input
+                      type="radio"
+                      name="typeFilter"
+                      value="borduren"
+                      checked={typeFilter === 'borduren'}
+                      onChange={(e) => setTypeFilter(e.target.value)}
+                    />
+                    Borduren Only
+                  </label>
+                </div>
+              </div>
+
+              {/* Categories List */}
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {categories.map((c) => (
+                {filteredCategories.map((c) => (
                   <label key={c.id} style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
                     <input
                       type="checkbox"

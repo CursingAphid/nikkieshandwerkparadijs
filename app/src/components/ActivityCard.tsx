@@ -61,7 +61,7 @@ function ActivityCard({
           )}
           
           {description && (
-            <div className="text-sm text-gray-600 mb-2">
+            <div className="text-sm text-gray-600 mb-2 whitespace-pre-wrap">
               {description.length > 100 
                 ? `${description.substring(0, 100)}...` 
                 : description

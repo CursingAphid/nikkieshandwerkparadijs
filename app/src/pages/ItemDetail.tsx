@@ -207,6 +207,11 @@ function ItemDetail() {
     return () => { cancelled = true }
   }, [param1, param2, param3])
 
+  // Scroll to top when component mounts (when navigating to a new item)
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [item?.id]) // Trigger when the item ID changes
+
   if (loading) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-8">
@@ -423,7 +428,14 @@ function ItemDetail() {
                   <Link
                     key={it.id}
                     to={itemHref}
-                    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                    onClick={() => {
+                      // Scroll to top immediately
+                      window.scrollTo({ top: 0, behavior: 'smooth' })
+                      // Also scroll to top after a short delay to ensure it works with React Router
+                      setTimeout(() => {
+                        window.scrollTo({ top: 0, behavior: 'smooth' })
+                      }, 100)
+                    }}
                     className="group block rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-md hover:shadow-xl transition-shadow"
                   >
                     <div className="aspect-[940/788] bg-gray-100 overflow-hidden">
