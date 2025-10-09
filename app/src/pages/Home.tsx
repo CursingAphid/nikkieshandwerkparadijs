@@ -155,8 +155,8 @@ function Home() {
           <div className="bg-gray-700">
             <div className="mx-auto max-w-6xl px-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
-                <div className="text-left py-12">
-                  <h2 ref={hakenHeadingRef} className="font-heading text-3xl md:text-4xl font-bold mb-6 fade-in-up">Haken</h2>
+                <div className="text-left pb-6 md:py-12">
+                  <h2 ref={hakenHeadingRef} className="font-heading text-3xl md:text-4xl font-bold mb-6 fade-in-up pt-6 md:pt-0">Haken</h2>
                   <div ref={hakenTextRef} className="fade-in-up">
                     <p className="text-base md:text-lg leading-relaxed">
                       Het haken van knuffels of kraamcadeaus is een populair tijdsverdrijf als je graag creatief bezig wilt zijn. Het is een geweldige manier om iets persoonlijks en unieks te maken. Door verschillende kleuren en garens te gebruiken kun je alles aanpassen naar de gewenste smaak.
@@ -174,9 +174,9 @@ function Home() {
                     </div>
                   </div>
                 </div>
-                <div className="flex justify-center md:justify-end items-stretch py-12">
+                <div className="flex justify-center md:justify-end items-stretch pb-6 md:py-12">
                   <div ref={hakenImageRef} className="w-full max-w-xs md:max-w-sm h-full rounded-lg overflow-hidden fade-in-up" style={{ backgroundColor: '#5C2D3D' }}>
-                    <img src={HaakIconn} alt="Haken" className="w-full h-full object-cover" />
+                    <img src={HaakIconn} alt="Haken" className="w-full h-full object-cover object-right" />
                   </div>
                 </div>
               </div>
@@ -187,13 +187,13 @@ function Home() {
           <div className="bg-gray-800">
             <div className="mx-auto max-w-6xl px-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
-                <div className="flex justify-center md:justify-start items-stretch py-12 order-2 md:order-1">
+                <div className="flex justify-center md:justify-start items-stretch pb-6 md:py-12 order-2 md:order-1">
                   <div ref={bordurenImageRef} className="w-full max-w-xs md:max-w-sm h-full rounded-lg overflow-hidden fade-in-up" style={{ backgroundColor: '#5C2D3D' }}>
                     <img src={BorduurIconn} alt="Borduren" className="w-full h-full object-cover" />
                   </div>
                 </div>
-                <div className="text-left py-12 order-1 md:order-2">
-                  <h2 ref={bordurenHeadingRef} className="font-heading text-3xl md:text-4xl font-bold mb-6 fade-in-up">Borduren</h2>
+                <div className="text-left pb-6 md:py-12 order-1 md:order-2">
+                  <h2 ref={bordurenHeadingRef} className="font-heading text-3xl md:text-4xl font-bold mb-6 fade-in-up pt-6 md:pt-0">Borduren</h2>
                   <div ref={bordurenTextRef} className="fade-in-up">
                     <p className="text-base md:text-lg leading-relaxed">
                       Borduren voegt een persoonlijk en uniek element toe aan dierendekens, keukentextiel of babyartikelen zoals badjasjes, badcapejes, handdoekjes, rompertjes, slabbetjes en nog veel meer.

@@ -1,4 +1,7 @@
 import { useState, useEffect } from 'react'
+import Slider from 'react-slick'
+import 'slick-carousel/slick/slick.css'
+import 'slick-carousel/slick/slick-theme.css'
 
 interface EscalatorCarouselProps {
   images: string[]
@@ -18,37 +21,41 @@ export function EscalatorCarousel({ images, className = '' }: EscalatorCarouselP
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
+  const settings = {
+    infinite: true,
+    speed: isMobile ? 240000 : 300000, // 4 minutes mobile, 5 minutes desktop
+    slidesToShow: 1,
+    slidesToScroll: 1,
+    autoplay: true,
+    autoplaySpeed: 0,
+    arrows: false,
+    pauseOnHover: false,
+    pauseOnFocus: false,
+    pauseOnDotsHover: false,
+    swipe: false,
+    touchMove: false,
+    fade: false,
+    cssEase: 'linear',
+    variableWidth: true,
+    adaptiveHeight: false,
+  }
+
   return (
     <div 
       className={`absolute left-0 right-0 h-[180px] sm:h-[140px] md:h-[160px] lg:h-[200px] z-5 escalator-slide-in overflow-hidden ${className}`}
       style={{ bottom: '-5px' }}
     >
-      <div 
-        className="flex h-full"
-        style={{
-          animation: `scroll-right ${isMobile ? '35s' : '49s'} linear infinite`,
-          animationName: 'scroll-right'
-        }}
-      >
-        {/* First set of images */}
+      <Slider {...settings}>
         {images.map((url, index) => (
-          <img
-            key={`first-${index}`}
-            src={url}
-            alt="Escalator image"
-            className="h-[180px] sm:h-[140px] md:h-[160px] lg:h-[200px] w-auto select-none pointer-events-none flex-shrink-0 mr-8"
-          />
+          <div key={`escalator-${index}`} className="px-4">
+            <img
+              src={url}
+              alt="Escalator image"
+              className="h-[180px] sm:h-[140px] md:h-[160px] lg:h-[200px] w-auto select-none pointer-events-none"
+            />
+          </div>
         ))}
-        {/* Second set for seamless loop */}
-        {images.map((url, index) => (
-          <img
-            key={`second-${index}`}
-            src={url}
-            alt="Escalator image"
-            className="h-[180px] sm:h-[140px] md:h-[160px] lg:h-[200px] w-auto select-none pointer-events-none flex-shrink-0 mr-8"
-          />
-        ))}
-      </div>
+      </Slider>
     </div>
   )
 }
