@@ -167,7 +167,7 @@ function Home() {
                     <div className="mt-6">
                       <Link 
                         to="/werkjes/haken" 
-                        className="inline-block bg-white text-gray-800 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+                        className="inline-block bg-white text-gray-800 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 hover:shadow-lg hover:scale-105 transition-all duration-300 transform"
                       >
                         Bekijken
                       </Link>
@@ -207,7 +207,7 @@ function Home() {
                     <div className="mt-6">
                       <Link 
                         to="/werkjes/borduren" 
-                        className="inline-block bg-white text-gray-800 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+                        className="inline-block bg-white text-gray-800 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 hover:shadow-lg hover:scale-105 transition-all duration-300 transform"
                       >
                         Bekijken
                       </Link>
