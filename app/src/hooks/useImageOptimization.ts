@@ -88,6 +88,14 @@ export function useImageOptimization(
 
       console.log(`Optimized ${files.length} images: ${formatFileSize(totalOriginalSize)} → ${formatFileSize(totalOptimizedSize)} (${totalSavings.toFixed(1)}% reduction)`)
 
+      // Set the last optimization stats for display
+      setLastOptimizationStats({
+        file: results[0].file, // Use first file as representative
+        originalSize: totalOriginalSize,
+        optimizedSize: totalOptimizedSize,
+        compressionRatio: totalSavings
+      })
+
       setOptimizationProgress(100)
       return results
     } catch (error) {

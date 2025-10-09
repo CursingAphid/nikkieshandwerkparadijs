@@ -2,8 +2,10 @@ import { apiUrl } from '../lib/api'
 import { useEffect, useState } from 'react'
 import { apiFetch } from '../lib/api'
 import { OptimizedFileUpload } from '../components/OptimizedFileUpload'
+import { useNavigate } from 'react-router-dom'
 
 function NewItem() {
+  const navigate = useNavigate()
   const [name, setName] = useState('')
   const [price, setPrice] = useState('')
   const [images, setImages] = useState<File[]>([])
@@ -11,12 +13,10 @@ function NewItem() {
   const [selectedCats, setSelectedCats] = useState<number[]>([])
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [created, setCreated] = useState<any | null>(null)
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
-    setCreated(null)
     if (!name.trim()) { setError('Name is required'); return }
     try {
       setSubmitting(true)
@@ -28,10 +28,7 @@ function NewItem() {
       const res = await fetch(apiUrl('/items'), { method: 'POST', body: form, credentials: 'include' })
       const json = await res.json()
       if (!res.ok) { setError(json?.error || 'Create failed'); return }
-      setCreated(json)
-      setName('')
-      setPrice('')
-      setImages([])
+      navigate('/admin')
     } catch (err) {
       setError('Unexpected error')
     } finally {
@@ -71,6 +68,7 @@ function NewItem() {
             <label className="label">Images</label>
             <OptimizedFileUpload
               onMultipleFilesSelect={(files) => setImages(prev => [...prev, ...files])}
+              onFilesChange={(files) => setImages(files)}
               multiple={true}
               maxSizeMB={5}
               optimizationOptions={{
@@ -104,30 +102,7 @@ function NewItem() {
           )}
           <button className="btn" disabled={submitting}>{submitting ? 'Saving...' : 'Create Item'}</button>
         </form>
-        {images.length > 0 && (
-          <div style={{ marginTop: 12 }}>
-            <p>Selected images: {images.length}</p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 8 }}>
-              {images.map((f, idx) => (
-                <img key={`${f.name}-${idx}`} src={URL.createObjectURL(f)} alt={f.name} style={{ width: '100%', borderRadius: 8 }} />
-              ))}
-            </div>
-          </div>
-        )}
         {error && <p style={{ color: '#dc2626', marginTop: 12 }}>{error}</p>}
-        {created && (
-          <div style={{ marginTop: 16 }}>
-            <p>Created:</p>
-            <pre style={{ whiteSpace: 'pre-wrap' }}>{JSON.stringify(created, null, 2)}</pre>
-            {Array.isArray(created.images) && created.images.length > 0 && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12, marginTop: 12 }}>
-                {created.images.map((u: string) => (
-                  <img key={u} src={u} alt="uploaded" style={{ width: '100%', borderRadius: 8 }} />
-                ))}
-              </div>
-            )}
-          </div>
-        )}
       </div>
     </div>
   )

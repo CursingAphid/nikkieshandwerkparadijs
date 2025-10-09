@@ -68,7 +68,7 @@ function EditHeadCategory() {
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json?.error || 'Update failed')
-      navigate('/admin/headcategories')
+      navigate('/admin')
     } catch (e: any) {
       setError(e.message || 'Update failed')
     } finally {
@@ -141,6 +141,7 @@ function EditHeadCategory() {
               )}
               <OptimizedFileUpload
                 onFileSelect={(file) => setHeadimage(file)}
+                onFilesChange={(files) => setHeadimage(files[0] || null)}
                 maxSizeMB={5}
                 optimizationOptions={{
                   maxWidth: 1920,

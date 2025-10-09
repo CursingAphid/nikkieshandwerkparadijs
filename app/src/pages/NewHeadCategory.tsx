@@ -32,7 +32,7 @@ function NewHeadCategory() {
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json?.error || 'Create failed')
-      navigate('/admin/headcategories')
+      navigate('/admin')
     } catch (e: any) {
       setError(e.message || 'Create failed')
     } finally {
@@ -91,6 +91,7 @@ function NewHeadCategory() {
               <label className="label">Head Image</label>
               <OptimizedFileUpload
                 onFileSelect={(file) => setHeadimage(file)}
+                onFilesChange={(files) => setHeadimage(files[0] || null)}
                 maxSizeMB={5}
                 optimizationOptions={{
                   maxWidth: 1920,

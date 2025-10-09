@@ -262,7 +262,7 @@ function PublicHeader() {
         
         {/* Dropdown Menu */}
         {hasDropdown && hoveredNavItem === label && dropdownData && (
-          <div className="absolute top-full left-0 w-64 bg-white border border-gray-200 rounded-lg shadow-xl z-50">
+          <div className="absolute top-full left-0 w-64 bg-white border border-gray-200 rounded-lg shadow-xl z-[70]">
             <div className="py-2">
               {dropdownData.map((item) => (
                 <div key={item.id}>
@@ -335,7 +335,7 @@ function PublicHeader() {
 
   return (
     <>
-      <div className="fixed top-0 left-0 right-0 z-50 border-b border-gray-200 bg-white/90 backdrop-blur">
+      <div className="fixed top-0 left-0 right-0 z-[60] border-b border-gray-200 bg-white/90 backdrop-blur">
         <div className="w-full px-5 py-[6px] flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2" aria-label="Home">
             <img src={HeaderLogo} alt="Nikkie's Handwerk Paradijs" className="h-12 w-auto" />
@@ -367,7 +367,7 @@ function PublicHeader() {
 
               {/* Search Results Dropdown */}
               {showResults && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl max-h-96 overflow-y-auto z-50">
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl max-h-96 overflow-y-auto z-[70]">
                   {loading ? (
                     <div className="p-4 text-center text-gray-500">
                       Zoeken...
@@ -631,7 +631,7 @@ function PublicHeader() {
 
       {/* Mobile Search Modal - Outside header container */}
       {mobileSearchOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-start justify-center z-50 lg:hidden">
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-start justify-center z-[80] lg:hidden">
           <div className="bg-white w-full max-w-md mx-4 mt-20 rounded-lg shadow-xl">
             <div className="p-4">
               {/* Search Header */}

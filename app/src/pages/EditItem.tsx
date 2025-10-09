@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { apiFetch, apiUrl } from '../lib/api'
 import { OptimizedFileUpload } from '../components/OptimizedFileUpload'
 
@@ -14,6 +14,7 @@ type Item = {
 
 function EditItem() {
   const { id } = useParams()
+  const navigate = useNavigate()
   const [item, setItem] = useState<Item | null>(null)
   const [name, setName] = useState('')
   const [price, setPrice] = useState('')
@@ -66,8 +67,7 @@ function EditItem() {
       const res = await fetch(apiUrl(`/items/${id}`), { method: 'PATCH', body: form, credentials: 'include' })
       const json = await res.json()
       if (!res.ok) throw new Error(json?.error || 'Update failed')
-      setItem(json)
-      setNewImages([])
+      navigate('/admin')
     } catch (e: any) {
       setError(e.message || 'Update failed')
     } finally {
@@ -112,6 +112,7 @@ function EditItem() {
             <label className="label">Add Images</label>
             <OptimizedFileUpload
               onMultipleFilesSelect={(files) => setNewImages(prev => [...prev, ...files])}
+              onFilesChange={(files) => setNewImages(files)}
               multiple={true}
               maxSizeMB={5}
               optimizationOptions={{
