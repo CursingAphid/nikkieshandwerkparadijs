@@ -45,9 +45,6 @@ function RouteHandler() {
   // Determine the URL structure based on parameters and headcategory existence
   const isParam1Headcategory = headcategories.some(hc => hc.slug === param1 && hc.type === type)
   
-  console.log(`RouteHandler: /werkjes/${type}/${param1}${param2 ? `/${param2}` : ''}${param3 ? `/${param3}` : ''}`)
-  console.log(`Is "${param1}" a headcategory for type "${type}"?`, isParam1Headcategory)
-  
   if (param3) {
     // 4 parameters: /werkjes/type/param1/param2/param3
     if (isParam1Headcategory) {

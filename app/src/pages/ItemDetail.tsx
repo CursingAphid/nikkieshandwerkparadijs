@@ -144,13 +144,13 @@ function ItemDetail() {
         let foundHeadcategory: HeadCategory | null = null
         
         // Determine URL structure based on parameters
-        const isParam1Headcategory = headcatsData.some((hc: HeadCategory) => hc.slug === param1)
+        const isParam1Headcategory = headcatsData.some((hc: HeadCategory) => hc.slug === param1 && hc.type === type)
         
         if (param3) {
           // 4 parameters: /werkjes/type/headcategory/category/item
           if (isParam1Headcategory) {
             // Find the headcategory first
-            foundHeadcategory = headcatsData.find((hc: HeadCategory) => hc.slug === param1)
+            foundHeadcategory = headcatsData.find((hc: HeadCategory) => hc.slug === param1 && hc.type === type)
             if (foundHeadcategory) {
               // Get categories linked to this headcategory
               const linkedCatsRes = await apiFetch(`/headcategories/${foundHeadcategory.id}/categories`)
@@ -167,7 +167,7 @@ function ItemDetail() {
           
           // Find the headcategory if this category belongs to one
           if (foundCategory && foundCategory.headcategory_id) {
-            foundHeadcategory = headcatsData.find((hc: HeadCategory) => hc.id === foundCategory!.headcategory_id)
+            foundHeadcategory = headcatsData.find((hc: HeadCategory) => hc.id === foundCategory!.headcategory_id && hc.type === type)
           }
         }
         
@@ -209,7 +209,15 @@ function ItemDetail() {
 
   // Scroll to top when component mounts (when navigating to a new item)
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    // Immediate scroll
+    window.scrollTo({ top: 0, behavior: 'auto' })
+    // Also scroll after delays to ensure it works
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }, 100)
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'auto' })
+    }, 300)
   }, [item?.id]) // Trigger when the item ID changes
 
   if (loading) {
@@ -425,19 +433,25 @@ function ItemDetail() {
                     const itemHref = type && category ? (headcategory ? `/werkjes/${type}/${headcategory.slug}/${category.slug}/${slugify(it.name)}` : `/werkjes/${type}/${category.slug}/${slugify(it.name)}`) : '#'
                 
                 return (
-                  <Link
-                    key={it.id}
-                    to={itemHref}
-                    onClick={() => {
-                      // Scroll to top immediately
-                      window.scrollTo({ top: 0, behavior: 'smooth' })
-                      // Also scroll to top after a short delay to ensure it works with React Router
-                      setTimeout(() => {
-                        window.scrollTo({ top: 0, behavior: 'smooth' })
-                      }, 100)
-                    }}
-                    className="group block rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-md hover:shadow-xl transition-shadow"
-                  >
+                   <Link
+                     key={it.id}
+                     to={itemHref}
+                     onClick={(e) => {
+                       // Prevent default navigation temporarily
+                       e.preventDefault()
+                       
+                       // Scroll to top immediately
+                       window.scrollTo({ top: 0, behavior: 'auto' })
+                       document.documentElement.scrollTop = 0
+                       document.body.scrollTop = 0
+                       
+                       // Navigate after a tiny delay to ensure scroll happens first
+                       setTimeout(() => {
+                         window.location.href = itemHref
+                       }, 10)
+                     }}
+                     className="group block rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-md hover:shadow-xl transition-shadow"
+                   >
                     <div className="aspect-[940/788] bg-gray-100 overflow-hidden">
                       {first ? (
                         <img

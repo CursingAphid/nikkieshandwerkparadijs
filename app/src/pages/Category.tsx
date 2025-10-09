@@ -46,8 +46,6 @@ function Category() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  console.log(`Category page: /werkjes/${type}/${param1}${param2 ? `/${param2}` : ''}`)
-
   // Helper function to create slug from name
   const slugify = (text: string) => {
     return text
@@ -83,24 +81,18 @@ function Category() {
         
         if (param2) {
           // 3 parameters: /werkjes/type/headcategory/category
-          console.log(`3-param URL: looking for headcategory "${param1}" and subcategory "${param2}"`)
           if (isParam1Headcategory) {
             // Find the headcategory first
             foundHeadcategory = headcatsData.find((hc: HeadCategory) => hc.slug === param1 && hc.type === type)
-            console.log(`Found headcategory:`, foundHeadcategory)
             
             if (foundHeadcategory) {
               // Get categories linked to this headcategory
               const linkedCatsRes = await apiFetch(`/headcategories/${foundHeadcategory.id}/categories`)
               const linkedCatsData = await linkedCatsRes.json()
-              console.log(`Linked categories for "${param1}":`, linkedCatsData)
-              console.log(`Looking for subcategory slug: "${param2}"`)
-              console.log(`Available subcategory slugs:`, linkedCatsData.map((c: Category) => c.slug))
               
               if (linkedCatsRes.ok) {
                 // Find the specific category within this headcategory
                 foundCategory = linkedCatsData.find((c: Category) => c.slug === param2)
-                console.log(`Found subcategory "${param2}":`, foundCategory)
               }
             }
           }
@@ -118,7 +110,6 @@ function Category() {
         }
         
         if (!foundCategory) {
-          console.error(`ERROR: Category "${param1}" not found!`)
           throw new Error('Category not found')
         }
 
