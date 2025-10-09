@@ -182,8 +182,38 @@ function Haken() {
             <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">Categorieën</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Loading skeleton for categories */}
+              {loading && (
+                <>
+                  {/* Skeleton for headcategories */}
+                  {[1, 2, 3].map((i) => (
+                    <div key={`headcat-skeleton-${i}`} className="animate-pulse">
+                      <div className="rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-md">
+                        <div className="aspect-[940/788] bg-gray-200"></div>
+                        <div className="p-4">
+                          <div className="h-6 bg-gray-200 rounded mb-2"></div>
+                          <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {/* Skeleton for standalone categories */}
+                  {[1, 2].map((i) => (
+                    <div key={`cat-skeleton-${i}`} className="animate-pulse">
+                      <div className="rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-md">
+                        <div className="aspect-[940/788] bg-gray-200"></div>
+                        <div className="p-4">
+                          <div className="h-6 bg-gray-200 rounded mb-2"></div>
+                          <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
+              
               {/* Headcategories */}
-              {headcategories.map((headcat) => {
+              {!loading && headcategories.map((headcat) => {
                 const headcatItems = headcategoryItems[headcat.id] || []
                 const firstItem = headcatItems.length > 0 ? headcatItems[0] : null
                 const firstImage = firstItem && Array.isArray(firstItem.images) && firstItem.images.length > 0 ? firstItem.images[0] : null
@@ -220,7 +250,7 @@ function Haken() {
               })}
               
               {/* Standalone categories (not linked to headcategories) */}
-              {categories
+              {!loading && categories
                 .filter(cat => !cat.headcategory_id)
                 .map((category) => {
                   const catItems = categoryItems[category.id] || []
