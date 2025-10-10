@@ -101,8 +101,7 @@ app.get('/api/admin/me', (req, res) => {
 // File upload to Supabase Storage
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
-// Create Item: name (required), description (optional), price (optional), images[] (optional)
-app.post('/api/items', requireAdmin, upload.array('images', 10), async (req, res) => {
+app.post('/api/items', requireAdmin, upload.array('images', 50), async (req, res) => {
   try {
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_KEY;
@@ -246,7 +245,7 @@ app.get('/api/items/:id', async (req, res) => {
 });
 
 // Update item (append images)
-app.patch('/api/items/:id', requireAdmin, upload.array('images', 10), async (req, res) => {
+app.patch('/api/items/:id', requireAdmin, upload.array('images', 25), async (req, res) => {
   try {
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_KEY;

@@ -8,11 +8,13 @@ import Giraffe from '../assets/home/giraffe.png'
 import HaakIconn from '../assets/home/haakicoon.png'
 import BorduurIconn from '../assets/home/borduuricoon.png'
 import { EscalatorCarousel } from '../components/EscalatorCarousel'
+import { ImageSlideshow } from '../components/ImageSlideshow'
 
 type Item = {
   id: number
   name: string
   images: string[] | null
+  price: number | null
   created_at: string
 }
 
@@ -232,19 +234,36 @@ function Home() {
                   <div ref={favoritesItemsRef} className="grid grid-cols-1 sm:grid-cols-3 gap-6 fade-in-up">
                     {favorites.slice(0, 3).map((item, idx) => {
                       const rank = idx + 1
-                      const first = Array.isArray(item.images) && item.images.length > 0 ? item.images[0] : null
                       const meta = itemIdToCategory[item.id] || { slug: '', type: '' }
                       const catSlug = meta.slug
                       const catType = meta.type || 'haken'
                       const itemSlug = slugify(item.name)
                       const href = catSlug && catType ? `/werkjes/${catType}/${catSlug}/${itemSlug}` : undefined
                       const card = (
-                        <div className="relative rounded-2xl shadow-[0_10px_20px_rgba(0,0,0,0.25)]">
-                          <div className="aspect-[940/788] bg-gray-100 overflow-hidden rounded-2xl">
-                            {first ? (
-                              <img src={first} alt={item.name} className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
+                        <div className="relative rounded-2xl shadow-[0_10px_20px_rgba(0,0,0,0.25)] bg-white overflow-hidden">
+                          <div className="aspect-[940/788] bg-gray-100 overflow-hidden">
+                            {Array.isArray(item.images) && item.images.length > 0 ? (
+                              <ImageSlideshow
+                                images={item.images}
+                                alt={item.name}
+                                className="transition-transform duration-300 hover:scale-105"
+                                autoPlay={true}
+                                autoPlayInterval={4000}
+                                showDots={true}
+                                showArrows={true}
+                              />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center text-gray-400">Geen afbeelding</div>
+                            )}
+                          </div>
+                          <div className="p-4">
+                            <h3 className="font-semibold text-lg mb-2 line-clamp-2 text-gray-800">
+                              {item.name}
+                            </h3>
+                            {item.price != null && (
+                              <div className="text-green-600 font-medium">
+                                €{item.price.toFixed(2)}
+                              </div>
                             )}
                           </div>
                         </div>
