@@ -15,6 +15,7 @@ import AdminHeadCategories from './pages/AdminHeadCategories.tsx'
 import NewHeadCategory from './pages/NewHeadCategory.tsx'
 import EditHeadCategory from './pages/EditHeadCategory.tsx'
 import CategoryItems from './pages/CategoryItems.tsx'
+import HeadCategoryCategories from './pages/HeadCategoryCategories.tsx'
 import NewCategory from './pages/NewCategory.tsx'
 import EditCategory from './pages/EditCategory.tsx'
 import AdminItems from './pages/AdminItems.tsx'
@@ -59,6 +60,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/admin/headcategories" element={<RequireAdmin><AdminLayout><AdminHeadCategories /></AdminLayout></RequireAdmin>} />
         <Route path="/admin/headcategories/new" element={<RequireAdmin><AdminLayout><NewHeadCategory /></AdminLayout></RequireAdmin>} />
         <Route path="/admin/headcategories/:id/edit" element={<RequireAdmin><AdminLayout><EditHeadCategory /></AdminLayout></RequireAdmin>} />
+        <Route path="/admin/headcategories/:id/categories" element={<RequireAdmin><AdminLayout><HeadCategoryCategories /></AdminLayout></RequireAdmin>} />
       </Routes>
     </BrowserRouter>
   </StrictMode>,

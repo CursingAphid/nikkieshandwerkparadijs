@@ -10,7 +10,8 @@ type Category = {
   description: string | null;
   type: string | null;
   headimageurl: string | null;
-  created_at: string 
+  created_at: string;
+  order: number;
 }
 
 function AdminCategories() {

@@ -242,6 +242,66 @@ app.patch('/api/items/orders', requireAdmin, async (req, res) => {
         res.status(500).json({ error: 'Bulk update item orders failed' });
     }
 });
+// Bulk update category orders
+app.patch('/api/categories/orders', requireAdmin, async (req, res) => {
+    try {
+        const { categories } = req.body || {};
+        const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+        if (!Array.isArray(categories)) {
+            res.status(400).json({ error: 'Categories must be an array' });
+            return;
+        }
+        // Update each category's order
+        const updates = categories.map((category) => supabase
+            .from('categories')
+            .update({ order: category.order })
+            .eq('id', category.id));
+        const results = await Promise.all(updates);
+        // Check for errors
+        for (const result of results) {
+            if (result.error) {
+                res.status(500).json({ error: result.error.message });
+                return;
+            }
+        }
+        res.json({ success: true });
+    }
+    catch (e) {
+        // eslint-disable-next-line no-console
+        console.error(e);
+        res.status(500).json({ error: 'Bulk update category orders failed' });
+    }
+});
+// Bulk update headcategory orders
+app.patch('/api/headcategories/orders', requireAdmin, async (req, res) => {
+    try {
+        const { headcategories } = req.body || {};
+        const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+        if (!Array.isArray(headcategories)) {
+            res.status(400).json({ error: 'Headcategories must be an array' });
+            return;
+        }
+        // Update each headcategory's order
+        const updates = headcategories.map((headcategory) => supabase
+            .from('headcategories')
+            .update({ order: headcategory.order })
+            .eq('id', headcategory.id));
+        const results = await Promise.all(updates);
+        // Check for errors
+        for (const result of results) {
+            if (result.error) {
+                res.status(500).json({ error: result.error.message });
+                return;
+            }
+        }
+        res.json({ success: true });
+    }
+    catch (e) {
+        // eslint-disable-next-line no-console
+        console.error(e);
+        res.status(500).json({ error: 'Bulk update headcategory orders failed' });
+    }
+});
 // Get single item
 app.get('/api/items/:id', async (req, res) => {
     try {
@@ -439,6 +499,7 @@ app.get('/api/categories', async (_req, res) => {
         const { data: categories, error: categoriesError } = await supabase
             .from('categories')
             .select('*')
+            .order('order', { ascending: true })
             .order('created_at', { ascending: false });
         if (categoriesError) {
             res.status(500).json({ error: categoriesError.message });
@@ -672,7 +733,7 @@ app.patch('/api/items/:id/order', requireAdmin, async (req, res) => {
 app.get('/api/headcategories', async (_req, res) => {
     try {
         const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
-        const { data, error } = await supabase.from('headcategories').select('*').order('created_at', { ascending: false });
+        const { data, error } = await supabase.from('headcategories').select('*').order('order', { ascending: true }).order('created_at', { ascending: false });
         if (error) {
             res.status(500).json({ error: error.message });
             return;
@@ -849,6 +910,7 @@ app.get('/api/headcategories/:id/categories', async (req, res) => {
             .from('headcategories_categories')
             .select('category_id')
             .eq('headcategory_id', req.params.id)).data?.map((r) => r.category_id) || [])
+            .order('order', { ascending: true })
             .order('name', { ascending: true });
         if (error) {
             res.status(500).json({ error: error.message });
