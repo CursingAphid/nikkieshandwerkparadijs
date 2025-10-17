@@ -15,20 +15,11 @@ function AdminLogin() {
     let cancelled = false
     async function check() {
       try {
-        console.log('Checking if user is already authenticated...')
         const res = await apiFetch('/admin/me')
-        console.log('Auth check response status:', res.status)
         const json = await res.json()
-        console.log('Auth check response data:', json)
-        
         if (json?.authed && !cancelled) {
-          console.log('User is already authenticated, redirecting to admin')
           navigate('/admin', { replace: true })
-        } else {
-          console.log('User is not authenticated')
         }
-      } catch (err) {
-        console.error('Auth check error:', err)
       } finally {
         if (!cancelled) setChecking(false)
       }
@@ -43,27 +34,22 @@ function AdminLogin() {
     setLoggingIn(true)
     
     try {
-      console.log('Attempting login with username:', username)
       const res = await apiFetch('/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
       })
       
-      console.log('Login response status:', res.status)
       const json = await res.json()
-      console.log('Login response data:', json)
       
       if (!res.ok) { 
         setError(json?.error || 'Login failed'); 
         return 
       }
       
-      console.log('Login successful, redirecting to admin dashboard')
       const redirectTo = (location.state as any)?.redirectTo || '/admin'
       navigate(redirectTo, { replace: true })
     } catch (err) {
-      console.error('Login error:', err)
       setError('Network error during login')
     } finally {
       setLoggingIn(false)
