@@ -16,6 +16,7 @@ type Item = {
   images: string[] | null
   price: number | null
   created_at: string
+  order: number
 }
 
 function Home() {

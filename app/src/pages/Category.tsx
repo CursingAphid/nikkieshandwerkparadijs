@@ -13,6 +13,7 @@ type Item = {
   images: string[] | null
   category_id: number
   created_at: string
+  order: number
 }
 
 type Category = {
@@ -159,7 +160,16 @@ function Category() {
         }
 
         if (!cancelled) {
-          setItems(itemsData || [])
+          // Sort items by order field first, then by creation date (newest first)
+          const sortedItems = (itemsData || []).sort((a: Item, b: Item) => {
+            // First sort by order (ascending)
+            if (a.order !== b.order) {
+              return a.order - b.order
+            }
+            // Then by creation date (newest first)
+            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          })
+          setItems(sortedItems)
         }
       } catch (e: any) {
         if (!cancelled) setError(e.message || 'Failed to load category')

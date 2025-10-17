@@ -12,6 +12,7 @@ type Item = {
   images: string[] | null
   category_id: number
   created_at: string
+  order: number
 }
 
 type Category = {
@@ -109,9 +110,16 @@ function Haken() {
           }
         }
 
-        // Sort by creation date (newest first) and take the latest 10
+        // Sort by order field first, then by creation date (newest first) and take the latest 10
         const sortedItems = allItems
-          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+          .sort((a, b) => {
+            // First sort by order (ascending)
+            if (a.order !== b.order) {
+              return a.order - b.order
+            }
+            // Then by creation date (newest first)
+            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          })
           .slice(0, 10)
 
             if (!cancelled) {

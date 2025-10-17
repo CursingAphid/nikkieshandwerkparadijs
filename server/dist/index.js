@@ -212,6 +212,36 @@ app.get('/api/items', async (_req, res) => {
         res.status(500).json({ error: 'List items failed' });
     }
 });
+// Bulk update item orders (MUST be before /api/items/:id route)
+app.patch('/api/items/orders', requireAdmin, async (req, res) => {
+    try {
+        const { items } = req.body || {};
+        const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+        if (!Array.isArray(items)) {
+            res.status(400).json({ error: 'Items must be an array' });
+            return;
+        }
+        // Update each item's order
+        const updates = items.map((item) => supabase
+            .from('items')
+            .update({ order: item.order })
+            .eq('id', item.id));
+        const results = await Promise.all(updates);
+        // Check for errors
+        for (const result of results) {
+            if (result.error) {
+                res.status(500).json({ error: result.error.message });
+                return;
+            }
+        }
+        res.json({ success: true });
+    }
+    catch (e) {
+        // eslint-disable-next-line no-console
+        console.error(e);
+        res.status(500).json({ error: 'Bulk update item orders failed' });
+    }
+});
 // Get single item
 app.get('/api/items/:id', async (req, res) => {
     try {
@@ -635,36 +665,6 @@ app.patch('/api/items/:id/order', requireAdmin, async (req, res) => {
         // eslint-disable-next-line no-console
         console.error(e);
         res.status(500).json({ error: 'Update item order failed' });
-    }
-});
-// Bulk update item orders
-app.patch('/api/items/orders', requireAdmin, async (req, res) => {
-    try {
-        const { items } = req.body || {};
-        const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
-        if (!Array.isArray(items)) {
-            res.status(400).json({ error: 'Items must be an array' });
-            return;
-        }
-        // Update each item's order
-        const updates = items.map((item) => supabase
-            .from('items')
-            .update({ order: item.order })
-            .eq('id', item.id));
-        const results = await Promise.all(updates);
-        // Check for errors
-        for (const result of results) {
-            if (result.error) {
-                res.status(500).json({ error: result.error.message });
-                return;
-            }
-        }
-        res.json({ success: true });
-    }
-    catch (e) {
-        // eslint-disable-next-line no-console
-        console.error(e);
-        res.status(500).json({ error: 'Bulk update item orders failed' });
     }
 });
 // --- Headcategories ---

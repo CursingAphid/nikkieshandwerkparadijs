@@ -3,7 +3,7 @@ const BASE = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5174').repl
 export function apiUrl(path: string): string {
   const p = path.startsWith('/') ? path : `/${path}`
   if (!BASE) return `/api${p}`
-  return `${BASE}${p}`
+  return `${BASE}/api${p}`
 }
 
 export async function apiFetch(path: string, init?: RequestInit): Promise<Response> {
