@@ -258,7 +258,7 @@ app.patch('/api/items/orders', requireAdmin, async (req, res) => {
   }
 });
 
-// Bulk update category orders
+// Bulk update category orders (used by HeadCategoryCategories page)
 app.patch('/api/categories/orders', requireAdmin, async (req, res) => {
   try {
     const { categories } = req.body || {};
@@ -292,43 +292,6 @@ app.patch('/api/categories/orders', requireAdmin, async (req, res) => {
     // eslint-disable-next-line no-console
     console.error(e);
     res.status(500).json({ error: 'Bulk update category orders failed' });
-  }
-});
-
-// Bulk update headcategory orders
-app.patch('/api/headcategories/orders', requireAdmin, async (req, res) => {
-  try {
-    const { headcategories } = req.body || {};
-    const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_KEY!);
-    
-    if (!Array.isArray(headcategories)) {
-      res.status(400).json({ error: 'Headcategories must be an array' });
-      return;
-    }
-    
-    // Update each headcategory's order
-    const updates = headcategories.map((headcategory: { id: number; order: number }) => 
-      supabase
-        .from('headcategories')
-        .update({ order: headcategory.order })
-        .eq('id', headcategory.id)
-    );
-    
-    const results = await Promise.all(updates);
-    
-    // Check for errors
-    for (const result of results) {
-      if (result.error) {
-        res.status(500).json({ error: result.error.message });
-        return;
-      }
-    }
-    
-    res.json({ success: true });
-  } catch (e) {
-    // eslint-disable-next-line no-console
-    console.error(e);
-    res.status(500).json({ error: 'Bulk update headcategory orders failed' });
   }
 });
 
