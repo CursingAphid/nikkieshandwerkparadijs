@@ -11,20 +11,15 @@ export function apiUrl(path: string): string {
   // For production, check if BASE already contains /api
   if (BASE.includes('/api')) {
     // If BASE already contains /api, use it as is
-    const url = `${BASE}${p}`
-    console.log('API URL (BASE contains /api):', url)
-    return url
+    return `${BASE}${p}`
   }
   
   // If BASE doesn't contain /api, add it
-  const url = `${BASE}/api${p}`
-  console.log('API URL (BASE does not contain /api):', url, 'BASE:', BASE)
-  return url
+  return `${BASE}/api${p}`
 }
 
 export async function apiFetch(path: string, init?: RequestInit): Promise<Response> {
   const url = apiUrl(path)
-  console.log('apiFetch called with path:', path, '-> URL:', url)
   const opts: RequestInit = {
     ...init,
     credentials: 'include',
