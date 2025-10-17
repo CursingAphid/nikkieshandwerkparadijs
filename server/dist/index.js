@@ -71,6 +71,13 @@ app.post('/api/admin/login', (req, res) => {
         // Cross-site cookie for separate frontend/backend domains requires SameSite=None; Secure
         const isProd = process.env.NODE_ENV === 'production';
         const sameSite = FRONTEND_ORIGIN ? 'none' : 'lax';
+        console.log('Login successful, setting cookie with:', {
+            isProd,
+            sameSite,
+            FRONTEND_ORIGIN,
+            domain: req.get('host'),
+            origin: req.get('origin')
+        });
         res.cookie('admin', '1', {
             httpOnly: true,
             sameSite,
@@ -90,7 +97,15 @@ app.post('/api/admin/logout', (req, res) => {
     res.json({ ok: true });
 });
 app.get('/api/admin/me', (req, res) => {
-    res.json({ authed: isAuthed(req) });
+    const authed = isAuthed(req);
+    console.log('Auth check:', {
+        authed,
+        signedCookies: req.signedCookies,
+        cookies: req.cookies,
+        origin: req.get('origin'),
+        host: req.get('host')
+    });
+    res.json({ authed });
 });
 // File upload to Supabase Storage
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
@@ -242,7 +257,7 @@ app.patch('/api/items/orders', requireAdmin, async (req, res) => {
         res.status(500).json({ error: 'Bulk update item orders failed' });
     }
 });
-// Bulk update category orders
+// Bulk update category orders (used by HeadCategoryCategories page)
 app.patch('/api/categories/orders', requireAdmin, async (req, res) => {
     try {
         const { categories } = req.body || {};
@@ -270,36 +285,6 @@ app.patch('/api/categories/orders', requireAdmin, async (req, res) => {
         // eslint-disable-next-line no-console
         console.error(e);
         res.status(500).json({ error: 'Bulk update category orders failed' });
-    }
-});
-// Bulk update headcategory orders
-app.patch('/api/headcategories/orders', requireAdmin, async (req, res) => {
-    try {
-        const { headcategories } = req.body || {};
-        const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
-        if (!Array.isArray(headcategories)) {
-            res.status(400).json({ error: 'Headcategories must be an array' });
-            return;
-        }
-        // Update each headcategory's order
-        const updates = headcategories.map((headcategory) => supabase
-            .from('headcategories')
-            .update({ order: headcategory.order })
-            .eq('id', headcategory.id));
-        const results = await Promise.all(updates);
-        // Check for errors
-        for (const result of results) {
-            if (result.error) {
-                res.status(500).json({ error: result.error.message });
-                return;
-            }
-        }
-        res.json({ success: true });
-    }
-    catch (e) {
-        // eslint-disable-next-line no-console
-        console.error(e);
-        res.status(500).json({ error: 'Bulk update headcategory orders failed' });
     }
 });
 // Get single item

@@ -76,6 +76,15 @@ app.post('/api/admin/login', (req, res) => {
     // Cross-site cookie for separate frontend/backend domains requires SameSite=None; Secure
     const isProd = process.env.NODE_ENV === 'production';
     const sameSite: 'lax' | 'none' = FRONTEND_ORIGIN ? 'none' : 'lax';
+    
+    console.log('Login successful, setting cookie with:', {
+      isProd,
+      sameSite,
+      FRONTEND_ORIGIN,
+      domain: req.get('host'),
+      origin: req.get('origin')
+    });
+    
     res.cookie('admin', '1', {
       httpOnly: true,
       sameSite,
@@ -96,7 +105,15 @@ app.post('/api/admin/logout', (req, res) => {
 });
 
 app.get('/api/admin/me', (req, res) => {
-  res.json({ authed: isAuthed(req) });
+  const authed = isAuthed(req);
+  console.log('Auth check:', {
+    authed,
+    signedCookies: req.signedCookies,
+    cookies: req.cookies,
+    origin: req.get('origin'),
+    host: req.get('host')
+  });
+  res.json({ authed });
 });
 // File upload to Supabase Storage
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
