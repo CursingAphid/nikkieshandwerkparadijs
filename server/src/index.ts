@@ -210,6 +210,7 @@ app.get('/api/items', async (_req, res) => {
     const { data, error } = await supabase
       .from('items')
       .select('*')
+      .order('order', { ascending: true })
       .order('created_at', { ascending: false });
     if (error) { res.status(500).json({ error: error.message }); return; }
     res.json(data || []);
@@ -571,6 +572,7 @@ app.get('/api/categories/:id/items', async (req, res) => {
           .select('item_id')
           .eq('category_id', req.params.id)).data?.map((r: any) => r.item_id) || []
       )
+      .order('order', { ascending: true })
       .order('created_at', { ascending: false });
     if (error) { res.status(500).json({ error: error.message }); return; }
     res.json(data || []);
@@ -602,6 +604,74 @@ app.get('/api/items/:id/categories', async (req, res) => {
     // eslint-disable-next-line no-console
     console.error(e);
     res.status(500).json({ error: 'List categories for item failed' });
+  }
+});
+
+// Update item order
+app.patch('/api/items/:id/order', requireAdmin, async (req, res) => {
+  try {
+    const { order } = req.body || {};
+    const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_KEY!);
+    
+    if (typeof order !== 'number' || order < 0) {
+      res.status(400).json({ error: 'Order must be a non-negative number' });
+      return;
+    }
+    
+    const { data, error } = await supabase
+      .from('items')
+      .update({ order })
+      .eq('id', req.params.id)
+      .select()
+      .single();
+    
+    if (error) { 
+      res.status(500).json({ error: error.message }); 
+      return; 
+    }
+    
+    res.json(data);
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error(e);
+    res.status(500).json({ error: 'Update item order failed' });
+  }
+});
+
+// Bulk update item orders
+app.patch('/api/items/orders', requireAdmin, async (req, res) => {
+  try {
+    const { items } = req.body || {};
+    const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_KEY!);
+    
+    if (!Array.isArray(items)) {
+      res.status(400).json({ error: 'Items must be an array' });
+      return;
+    }
+    
+    // Update each item's order
+    const updates = items.map((item: { id: number; order: number }) => 
+      supabase
+        .from('items')
+        .update({ order: item.order })
+        .eq('id', item.id)
+    );
+    
+    const results = await Promise.all(updates);
+    
+    // Check for errors
+    for (const result of results) {
+      if (result.error) {
+        res.status(500).json({ error: result.error.message });
+        return;
+      }
+    }
+    
+    res.json({ success: true });
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error(e);
+    res.status(500).json({ error: 'Bulk update item orders failed' });
   }
 });
 // --- Headcategories ---

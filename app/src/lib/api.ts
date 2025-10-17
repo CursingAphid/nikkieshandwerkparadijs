@@ -1,4 +1,4 @@
-const BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
+const BASE = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5174').replace(/\/$/, '')
 
 export function apiUrl(path: string): string {
   const p = path.startsWith('/') ? path : `/${path}`

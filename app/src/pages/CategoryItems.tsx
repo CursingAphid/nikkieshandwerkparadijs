@@ -1,6 +1,25 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { apiFetch } from '../lib/api'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import {
+  useSortable,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import type { DragEndEvent } from '@dnd-kit/core'
 
 type Item = {
   id: number
@@ -8,6 +27,7 @@ type Item = {
   price: number | null
   images: string[] | null
   created_at: string
+  order: number
 }
 
 type Category = {
@@ -16,17 +36,83 @@ type Category = {
   slug: string
 }
 
+// Sortable Item Component
+function SortableItem({ item }: { item: Item }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-grab active:cursor-grabbing"
+    >
+      <div className="font-semibold text-lg mb-2">{item.name}</div>
+      {item.price !== null && (
+        <div className="text-lg font-medium text-green-600 mb-2">
+          €{item.price.toFixed(2)}
+        </div>
+      )}
+      {Array.isArray(item.images) && item.images.length > 0 && (
+        <div className="flex gap-2 mb-3 flex-wrap">
+          {item.images.slice(0, 3).map((url) => (
+            <img 
+              key={url} 
+              src={url} 
+              alt="item" 
+              className="w-16 h-16 object-cover rounded"
+            />
+          ))}
+        </div>
+      )}
+      <div className="flex gap-2">
+        <Link className="btn" to={`/admin/items/${item.id}/edit`}>
+          Edit
+        </Link>
+      </div>
+    </div>
+  )
+}
+
 function CategoryItems() {
   const { id } = useParams<{ id: string }>()
   const [items, setItems] = useState<Item[]>([])
   const [category, setCategory] = useState<Category | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isUpdating, setIsUpdating] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
 
   useEffect(() => {
     let cancelled = false
     async function load() {
       try {
+        // Check authentication first
+        const authRes = await apiFetch('/admin/me')
+        const authData = await authRes.json()
+        if (!cancelled) setIsAuthenticated(authData?.authed || false)
+        
         // Load items in this category
         const itemsRes = await apiFetch(`/categories/${id}/items`)
         const itemsData = await itemsRes.json()
@@ -53,6 +139,65 @@ function CategoryItems() {
     return () => { cancelled = true }
   }, [id])
 
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event
+
+    if (active.id !== over?.id) {
+      // Check authentication before allowing reorder
+      if (!isAuthenticated) {
+        alert('You need to be logged in as admin to reorder items. Please log in first.')
+        return
+      }
+
+      const oldIndex = items.findIndex((item) => item.id === active.id)
+      const newIndex = items.findIndex((item) => item.id === over?.id)
+
+      const newItems = arrayMove(items, oldIndex, newIndex)
+      setItems(newItems)
+
+      // Update order values in the database
+      setIsUpdating(true)
+      try {
+        const updatedItems = newItems.map((item, index) => ({
+          id: item.id,
+          order: index
+        }))
+
+        console.log('Sending order update:', updatedItems)
+        
+        const res = await apiFetch('/items/orders', {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ items: updatedItems }),
+        })
+
+        console.log('Response status:', res.status)
+        console.log('Response ok:', res.ok)
+
+        if (!res.ok) {
+          const errorData = await res.json()
+          console.error('API Error:', errorData)
+          
+          if (res.status === 401) {
+            throw new Error('You need to be logged in as admin to reorder items. Please log in first.')
+          }
+          throw new Error(errorData?.error || 'Failed to update item order')
+        }
+        
+        console.log('Order update successful')
+      } catch (e: any) {
+        console.error('Failed to update item order:', e)
+        // Revert the local state on error
+        setItems(items)
+        alert(`Failed to save new order: ${e.message}`)
+      } finally {
+        setIsUpdating(false)
+      }
+    }
+  }
+
   return (
     <div className="container">
       <h1 className="title">
@@ -71,35 +216,41 @@ function CategoryItems() {
           {items.length === 0 ? (
             <p className="text-gray-500">No items in this category yet.</p>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {items.map((item) => (
-                <div key={item.id} className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
-                  <div className="font-semibold text-lg mb-2">{item.name}</div>
-                  {item.price !== null && (
-                    <div className="text-lg font-medium text-green-600 mb-2">
-                      €{item.price.toFixed(2)}
-                    </div>
-                  )}
-                  {Array.isArray(item.images) && item.images.length > 0 && (
-                    <div className="flex gap-2 mb-3 flex-wrap">
-                      {item.images.slice(0, 3).map((url) => (
-                        <img 
-                          key={url} 
-                          src={url} 
-                          alt="item" 
-                          className="w-16 h-16 object-cover rounded"
-                        />
-                      ))}
-                    </div>
-                  )}
-                  <div className="flex gap-2">
-                    <Link className="btn" to={`/admin/items/${item.id}/edit`}>
-                      Edit
+            <div className="mb-4">
+              {isAuthenticated ? (
+                <p className="text-sm text-gray-600">
+                  Drag and drop items to reorder them. {isUpdating && 'Saving...'}
+                </p>
+              ) : (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                  <p className="text-sm text-yellow-800">
+                    <strong>Admin access required:</strong> You need to be logged in as admin to reorder items.
+                    <Link to="/admin/login" className="ml-2 text-blue-600 hover:text-blue-800 underline">
+                      Log in here
                     </Link>
-                  </div>
+                  </p>
                 </div>
-              ))}
+              )}
             </div>
+          )}
+          
+          {items.length > 0 && (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={items.map(item => item.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {items.map((item) => (
+                    <SortableItem key={item.id} item={item} />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
           )}
         </div>
       )}
