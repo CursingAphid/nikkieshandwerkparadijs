@@ -1,39 +1,107 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import OverBanner from '../assets/banners/over_banner.png';
 import NicoleOnScooter from '../assets/over/nicole_op_scooter.png';
+import HobbyKamer1 from '../assets/over/hobby_kamer/1-25.png';
+import HobbyKamer2 from '../assets/over/hobby_kamer/2-25.png';
+import HobbyKamer3 from '../assets/over/hobby_kamer/3-24.png';
+import HobbyKamer4 from '../assets/over/hobby_kamer/4-20.png';
+import HobbyKamer5 from '../assets/over/hobby_kamer/5-15.png';
+import OverMijLogo from '../assets/over/Over_mij_logo.png';
 
 function Over() {
   const titleRef = useRef<HTMLHeadingElement>(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [visibleElements, setVisibleElements] = useState<Set<string>>(new Set());
+  
+  const hobbyKamerImages = [
+    HobbyKamer1,
+    HobbyKamer2,
+    HobbyKamer3,
+    HobbyKamer4,
+    HobbyKamer5
+  ];
+
+  // Carousel functions
+  const nextImage = () => {
+    setCurrentImageIndex((prevIndex) => 
+      prevIndex === hobbyKamerImages.length - 1 ? 0 : prevIndex + 1
+    );
+  };
+
+  const prevImage = () => {
+    setCurrentImageIndex((prevIndex) => 
+      prevIndex === 0 ? hobbyKamerImages.length - 1 : prevIndex - 1
+    );
+  };
+
+  const goToImage = (index: number) => {
+    setCurrentImageIndex(index);
+  };
 
   // Scroll-based animations
   useEffect(() => {
     const observerOptions = {
-      threshold: 0.1,
-      rootMargin: '0px 0px 200px 0px'
+      threshold: 0.2,
+      rootMargin: '0px 0px -50px 0px'
     };
 
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
-          entry.target.classList.add('animate-in');
+          const elementId = entry.target.getAttribute('data-animate-id');
+          if (elementId) {
+            setVisibleElements(prev => new Set([...prev, elementId]));
+          }
         }
       });
     }, observerOptions);
 
-    if (titleRef.current) {
-      observer.observe(titleRef.current);
-    }
+    // Observe all elements with data-animate-id
+    const animatedElements = document.querySelectorAll('[data-animate-id]');
+    animatedElements.forEach(el => observer.observe(el));
 
     return () => {
-      if (titleRef.current) {
-        observer.unobserve(titleRef.current);
-      }
+      animatedElements.forEach(el => observer.unobserve(el));
     };
   }, []);
 
   return (
     <div>
+      <style jsx>{`
+        .fade-in-left {
+          opacity: 0;
+          transform: translateX(-50px);
+          transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+        
+        .fade-in-left.visible {
+          opacity: 1;
+          transform: translateX(0);
+        }
+        
+        .fade-in-right {
+          opacity: 0;
+          transform: translateX(50px);
+          transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+        
+        .fade-in-right.visible {
+          opacity: 1;
+          transform: translateX(0);
+        }
+        
+        .logo-pop-in {
+          opacity: 0;
+          transform: scale(0.8);
+          transition: opacity 1s ease-out, transform 1s ease-out;
+        }
+        
+        .logo-pop-in.visible {
+          opacity: 1;
+          transform: scale(1);
+        }
+      `}</style>
       {/* Banner Section */}
       <section 
         className="w-full h-48 md:h-64 lg:h-80 flex items-center justify-center"
@@ -43,17 +111,25 @@ function Over() {
           backgroundPosition: 'center' 
         }}
       >
-        <h1 ref={titleRef} className="text-3xl md:text-4xl lg:text-5xl font-bold text-white text-center logo-pop-in" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
+        <h1 
+          ref={titleRef} 
+          data-animate-id="banner-title"
+          className={`text-3xl md:text-4xl lg:text-5xl font-bold text-white text-center logo-pop-in ${visibleElements.has('banner-title') ? 'visible' : ''}`} 
+          style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}
+        >
           Over Nikkie's Handwerkparadijs
         </h1>
       </section>
 
+      {/* Wie ben ik? Section */}
       <div className="mx-auto max-w-6xl px-4 py-8">
-        {/* Wie ben ik? Section */}
         <div className="mb-16">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             {/* Text Column */}
-            <div>
+            <div 
+              data-animate-id="wie-ben-ik-text"
+              className={`fade-in-left ${visibleElements.has('wie-ben-ik-text') ? 'visible' : ''}`}
+            >
               <h1 className="text-3xl md:text-4xl font-bold mb-6">Wie ben ik?</h1>
               
               <div className="prose prose-lg max-w-none">
@@ -75,7 +151,10 @@ function Over() {
             </div>
             
             {/* Image Column */}
-            <div>
+            <div 
+              data-animate-id="wie-ben-ik-image"
+              className={`fade-in-right ${visibleElements.has('wie-ben-ik-image') ? 'visible' : ''}`}
+            >
               <div className="relative">
                 <img 
                   src={NicoleOnScooter} 
@@ -86,22 +165,121 @@ function Over() {
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Contact Section */}
-        <div className="mb-12">
-          <h2 className="text-2xl font-bold mb-4 mt-8">Contact</h2>
-          <p className="text-gray-700 text-lg leading-relaxed mb-6">
-            Heb je vragen over een product of wil je een speciale bestelling plaatsen? Neem gerust contact 
-            met mij op! Ik help je graag verder met het realiseren van jouw unieke handwerk.
-          </p>
-          
-          <div className="mb-6">
-            <Link 
-              to="/contact" 
-              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-300 font-semibold"
+      {/* Mijn Diensten Section */}
+      <div className="bg-blue-50 py-16 w-full">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            {/* Image Column */}
+            <div 
+              data-animate-id="diensten-image"
+              className={`fade-in-left ${visibleElements.has('diensten-image') ? 'visible' : ''}`}
             >
-              <span>Neem contact op</span>
-            </Link>
+              <div className="relative">
+                <img 
+                  src={OverMijLogo} 
+                  alt="Nicole met gehaakte knuffels en borduurwerk" 
+                  className="w-full max-w-md lg:max-w-none h-auto rounded-2xl shadow-lg mx-auto lg:mx-0"
+                />
+              </div>
+            </div>
+            
+            {/* Text Column */}
+            <div 
+              data-animate-id="diensten-text"
+              className={`fade-in-right ${visibleElements.has('diensten-text') ? 'visible' : ''}`}
+            >
+              <div className="prose prose-lg max-w-none">
+                <p className="text-gray-700 text-lg leading-relaxed mb-6">
+                  Om alles nog persoonlijker te maken, heb ik een borduurmachine aangeschaft waarbij ik namen, teksten en afbeeldingen kan toevoegen aan mijn haakwerkjes. Inmiddels vind ik het borduren zo leuk dat ik mijn hobby heb uitgebreid met het borduren van allerlei items zoals badjasjes, rompertjes, badcapejes, mutsjes, handdoekjes en nog veel meer.
+                </p>
+                
+                <p className="text-gray-700 text-lg leading-relaxed mb-6">
+                  Naast het borduren van babyartikelen maak ik ook dierendekentjes. Deze zachte dekentjes worden geborduurd met de naam en een afbeelding van je huisdier en afgewerkt met een mooie strik.
+                </p>
+                
+                <p className="text-gray-700 text-lg leading-relaxed mb-6">
+                  Bij elk item ga ik op zoek naar de juiste kleuren, patronen en lettertypen zodat er een prachtig eindresultaat ontstaat. Neem gerust een kijkje op mijn website, facebooksite of instagram account. Mocht je interesse hebben in één van mijn werkjes of wil je iets persoonlijks gemaakt hebben, neem dan contact met mij op.
+                </p>
+                
+                <p className="text-gray-700 text-lg leading-relaxed font-semibold">
+                  Liefs Nicole ♥
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Mijn Hobbykamer Section */}
+      <div className="mx-auto max-w-6xl px-4 py-8">
+        <div className="mb-16">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+            {/* Text Column */}
+            <div 
+              data-animate-id="hobbykamer-text"
+              className={`flex flex-col justify-start fade-in-left ${visibleElements.has('hobbykamer-text') ? 'visible' : ''}`}
+            >
+              <h2 className="text-3xl md:text-4xl font-bold mb-6">Mijn Hobbykamer</h2>
+              <p className="text-gray-700 text-lg leading-relaxed mb-6">
+                In ons huis heb ik één kamer omgetoverd tot mijn hobbykamer. Hier vind je al mijn materialen, 
+                stofjes, haakwol en nog veel meer leuke items. In deze kamer komt mijn creativiteit tot leven!
+              </p>
+            </div>
+            
+            {/* Image Carousel Column */}
+            <div 
+              data-animate-id="hobbykamer-carousel"
+              className={`relative fade-in-right ${visibleElements.has('hobbykamer-carousel') ? 'visible' : ''}`}
+            >
+              <div className="relative overflow-hidden rounded-2xl shadow-2xl">
+                <div className="relative h-96 md:h-[500px]">
+                  <img
+                    src={hobbyKamerImages[currentImageIndex]}
+                    alt={`Hobbykamer foto ${currentImageIndex + 1}`}
+                    className="w-full h-full object-cover transition-opacity duration-500"
+                  />
+                  
+                  {/* Navigation Arrows */}
+                  <button
+                    onClick={prevImage}
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 hover:bg-opacity-70 text-white p-3 rounded-full transition-all duration-300 hover:scale-110"
+                    aria-label="Vorige foto"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                  
+                  <button
+                    onClick={nextImage}
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 hover:bg-opacity-70 text-white p-3 rounded-full transition-all duration-300 hover:scale-110"
+                    aria-label="Volgende foto"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* Dots Indicator */}
+              <div className="flex justify-center mt-6 space-x-2">
+                {hobbyKamerImages.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => goToImage(index)}
+                    className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                      index === currentImageIndex 
+                        ? 'bg-blue-600 scale-125' 
+                        : 'bg-gray-300 hover:bg-gray-400'
+                    }`}
+                    aria-label={`Ga naar foto ${index + 1}`}
+                  />
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>
