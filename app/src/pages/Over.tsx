@@ -1,5 +1,4 @@
 import { useRef, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import OverBanner from '../assets/banners/over_banner.png';
 import NicoleOnScooter from '../assets/over/nicole_op_scooter.png';
 import HobbyKamer1 from '../assets/over/hobby_kamer/1-25.png';
@@ -68,7 +67,7 @@ function Over() {
 
   return (
     <div>
-      <style jsx>{`
+      <style>{`
         .fade-in-left {
           opacity: 0;
           transform: translateX(-50px);
