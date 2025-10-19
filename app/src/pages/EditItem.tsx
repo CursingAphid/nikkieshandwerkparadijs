@@ -17,6 +17,7 @@ function EditItem() {
   const navigate = useNavigate()
   const [item, setItem] = useState<Item | null>(null)
   const [name, setName] = useState('')
+  const [description, setDescription] = useState('')
   const [price, setPrice] = useState('')
   const [newImages, setNewImages] = useState<File[]>([])
   const [categories, setCategories] = useState<{ id: number, name: string, type: string | null }[]>([])
@@ -36,7 +37,7 @@ function EditItem() {
         if (cancelled) return
         setItem(json)
         setName(json.name || '')
-        
+        setDescription(json.description || '')
         setPrice(json.price == null ? '' : String(json.price))
         // load item categories
         const catsRes = await apiFetch(`/items/${id}/categories`)
@@ -68,6 +69,7 @@ function EditItem() {
       setSaving(true)
       const form = new FormData()
       form.append('name', name)
+      form.append('description', description)
       form.append('price', price)
       for (const f of newImages) form.append('images', f)
       form.append('categoryIds', JSON.stringify(selectedCats))
@@ -109,6 +111,17 @@ function EditItem() {
           <div style={{ marginBottom: 16 }}>
             <label className="label">Name *</label>
             <input className="input" value={name} onChange={e => setName(e.target.value)} required />
+          </div>
+          
+          <div style={{ marginBottom: 16 }}>
+            <label className="label">Description</label>
+            <textarea 
+              className="input" 
+              value={description} 
+              onChange={e => setDescription(e.target.value)}
+              rows={4}
+              style={{ resize: 'vertical', minHeight: '80px' }}
+            />
           </div>
           
           <div style={{ marginBottom: 16 }}>

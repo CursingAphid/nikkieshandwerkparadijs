@@ -410,12 +410,6 @@ function ItemDetail() {
             </div>
           )}
 
-          {/* Additional info or actions can go here */}
-          <div className="mt-8 p-4 bg-gray-50 rounded-lg">
-            <p className="text-sm text-gray-600">
-              Geïnteresseerd in dit product? Neem contact op voor meer informatie of om een bestelling te plaatsen.
-            </p>
-          </div>
         </div>
       </div>
 

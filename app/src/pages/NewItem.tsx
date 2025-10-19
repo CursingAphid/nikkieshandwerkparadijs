@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom'
 function NewItem() {
   const navigate = useNavigate()
   const [name, setName] = useState('')
+  const [description, setDescription] = useState('')
   const [price, setPrice] = useState('')
   const [images, setImages] = useState<File[]>([])
   const [categories, setCategories] = useState<{ id: number, name: string, type: string | null }[]>([])
@@ -23,6 +24,7 @@ function NewItem() {
       setSubmitting(true)
       const form = new FormData()
       form.append('name', name)
+      form.append('description', description)
       form.append('price', price)
       for (const f of images) form.append('images', f)
       if (selectedCats.length > 0) form.append('categoryIds', JSON.stringify(selectedCats))
@@ -65,6 +67,17 @@ function NewItem() {
           <div style={{ marginBottom: 16 }}>
             <label className="label">Name *</label>
             <input className="input" value={name} onChange={e => setName(e.target.value)} required />
+          </div>
+          
+          <div style={{ marginBottom: 16 }}>
+            <label className="label">Description</label>
+            <textarea 
+              className="input" 
+              value={description} 
+              onChange={e => setDescription(e.target.value)}
+              rows={4}
+              style={{ resize: 'vertical', minHeight: '80px' }}
+            />
           </div>
           
           <div style={{ marginBottom: 16 }}>

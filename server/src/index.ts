@@ -118,6 +118,8 @@ app.post('/api/items', requireAdmin, upload.array('images', 50), async (req, res
       res.status(400).json({ error: 'Name is required' });
       return;
     }
+    const descriptionRaw = (req.body.description ?? '').toString().trim();
+    const description = descriptionRaw === '' ? null : descriptionRaw;
     const priceRaw = (req.body.price ?? '').toString().trim();
     const priceValue = priceRaw === '' ? null : Number(priceRaw);
     const price = priceValue !== null && Number.isFinite(priceValue) ? priceValue : null;
@@ -168,6 +170,7 @@ app.post('/api/items', requireAdmin, upload.array('images', 50), async (req, res
       .from('items')
       .insert({
         name: nameRaw,
+        description,
         price,
         images: urls.length ? urls : null,
         is_favorite: String(req.body.is_favorite || '').toLowerCase() === 'true'
@@ -342,6 +345,8 @@ app.patch('/api/items/:id', requireAdmin, upload.array('images', 25), async (req
 
     const nameRaw = (req.body.name ?? existing.name ?? '').toString();
     if (!nameRaw.trim()) { res.status(400).json({ error: 'Name is required' }); return; }
+    const descriptionRaw = (req.body.description ?? existing.description ?? '').toString().trim();
+    const description = descriptionRaw === '' ? null : descriptionRaw;
     const priceRaw = (req.body.price ?? (existing.price ?? '')).toString().trim();
     const priceValue = priceRaw === '' ? null : Number(priceRaw);
     const price = priceValue !== null && Number.isFinite(priceValue) ? priceValue : null;
@@ -389,6 +394,7 @@ app.patch('/api/items/:id', requireAdmin, upload.array('images', 25), async (req
 
     const updatePayload: any = {
       name: nameRaw,
+      description,
       price,
       images: mergedImages,
     };
