@@ -392,11 +392,26 @@ app.patch('/api/items/:id', requireAdmin, upload.array('images', 25), async (req
       ? [...existing.images, ...newUrls]
       : (newUrls.length ? newUrls : null);
 
+    // Handle reordered existing images
+    let finalImages = mergedImages;
+    if (req.body.existingImagesOrder) {
+      try {
+        const reorderedExisting = JSON.parse(req.body.existingImagesOrder);
+        if (Array.isArray(reorderedExisting)) {
+          // Combine reordered existing images with new images
+          finalImages = [...reorderedExisting, ...newUrls];
+        }
+      } catch (e) {
+        // If parsing fails, use the original merged images
+        console.warn('Failed to parse existingImagesOrder:', e);
+      }
+    }
+
     const updatePayload: any = {
       name: nameRaw,
       description,
       price,
-      images: mergedImages,
+      images: finalImages,
     };
     if (typeof req.body.is_favorite !== 'undefined') {
       updatePayload.is_favorite = String(req.body.is_favorite).toLowerCase() === 'true';

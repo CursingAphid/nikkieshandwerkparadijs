@@ -10,6 +10,7 @@ function NewItem() {
   const [description, setDescription] = useState('')
   const [price, setPrice] = useState('')
   const [images, setImages] = useState<File[]>([])
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
   const [categories, setCategories] = useState<{ id: number, name: string, type: string | null }[]>([])
   const [selectedCats, setSelectedCats] = useState<number[]>([])
   const [typeFilter, setTypeFilter] = useState<string>('all') // 'all', 'haken', 'borduren'
@@ -59,6 +60,37 @@ function NewItem() {
     return cat.type === typeFilter
   })
 
+  // Drag and drop functions for image reordering
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index)
+    e.dataTransfer.effectAllowed = 'move'
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+  }
+
+  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault()
+    if (draggedIndex === null || draggedIndex === dropIndex) return
+
+    const newImages = [...images]
+    const draggedItem = newImages[draggedIndex]
+    newImages.splice(draggedIndex, 1)
+    newImages.splice(dropIndex, 0, draggedItem)
+    setImages(newImages)
+    setDraggedIndex(null)
+  }
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null)
+  }
+
+  const removeImage = (index: number) => {
+    setImages(prev => prev.filter((_, i) => i !== index))
+  }
+
   return (
     <div className="container">
       <h1 className="title">New Item</h1>
@@ -99,6 +131,89 @@ function NewItem() {
               }}
             />
           </div>
+
+          {/* Image Preview with Drag & Drop Reordering */}
+          {images.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <label className="label">Uploaded Images (drag to reorder)</label>
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', 
+                gap: 8,
+                marginTop: 8
+              }}>
+                {images.map((file, index) => (
+                  <div
+                    key={`${file.name}-${index}`}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, index)}
+                    onDragOver={handleDragOver}
+                    onDrop={(e) => handleDrop(e, index)}
+                    onDragEnd={handleDragEnd}
+                    style={{
+                      position: 'relative',
+                      cursor: 'move',
+                      opacity: draggedIndex === index ? 0.5 : 1,
+                      border: draggedIndex === index ? '2px dashed #3b82f6' : '2px solid transparent',
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <img
+                      src={URL.createObjectURL(file)}
+                      alt={`Preview ${index + 1}`}
+                      style={{
+                        width: '100%',
+                        height: '120px',
+                        objectFit: 'cover',
+                        display: 'block'
+                      }}
+                    />
+                    <div style={{
+                      position: 'absolute',
+                      top: '4px',
+                      left: '4px',
+                      background: 'rgba(0, 0, 0, 0.7)',
+                      color: 'white',
+                      padding: '2px 6px',
+                      borderRadius: '4px',
+                      fontSize: '12px',
+                      fontWeight: 'bold'
+                    }}>
+                      {index + 1}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeImage(index)}
+                      style={{
+                        position: 'absolute',
+                        top: '4px',
+                        right: '4px',
+                        width: '24px',
+                        height: '24px',
+                        borderRadius: '50%',
+                        background: 'rgba(220, 38, 38, 0.8)',
+                        color: 'white',
+                        border: 'none',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '16px',
+                        fontWeight: 'bold',
+                        opacity: 1,
+                        zIndex: 10
+                      }}
+                      aria-label="Remove image"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {categories.length > 0 && (
             <div style={{ marginBottom: 16 }}>
