@@ -73,9 +73,11 @@ app.post('/api/admin/login', (req, res) => {
     return;
   }
   if (username === expectedUser && password === expectedPass) {
-    // Use SameSite=lax for better compatibility, especially in incognito mode
+    // In production/cross-site, cookies on XHR require SameSite=None; Secure must be true
     const isProd = process.env.NODE_ENV === 'production';
-    const sameSite: 'lax' | 'none' = 'lax'; // Always use 'lax' for better compatibility
+    const frontendOrigin = process.env.FRONTEND_ORIGIN || '';
+    const isLocalFrontend = /localhost|127\.0\.0\.1/i.test(frontendOrigin);
+    const sameSite: 'lax' | 'none' = (!isLocalFrontend && isProd) ? 'none' : 'lax';
     
     res.cookie('admin', '1', {
       httpOnly: true,
