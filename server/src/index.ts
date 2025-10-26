@@ -215,15 +215,82 @@ app.get('/api/items', async (_req, res) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
     const { data, error } = await supabase
       .from('items')
+      .select('*');
+    if (error) { res.status(500).json({ error: error.message }); return; }
+    
+    // Sort: favorites first (ordered by order, then created_at), then featured, then all others
+    const sorted = (data || []).sort((a, b) => {
+      const aFav = (a as any).is_favorite || false;
+      const bFav = (b as any).is_favorite || false;
+      const aHakenFeatured = (a as any).featured_haken || false;
+      const bHakenFeatured = (b as any).featured_haken || false;
+      const aBordurenFeatured = (a as any).featured_borduren || false;
+      const bBordurenFeatured = (b as any).featured_borduren || false;
+      
+      // Favorites group first
+      if (aFav && !bFav) return -1;
+      if (!aFav && bFav) return 1;
+      if (aFav && bFav) {
+        // Within favorites, sort by order, then created_at
+        if (a.order !== b.order) return a.order - b.order;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+      
+      // Featured items next (for both haken and borduren)
+      const aFeatured = aHakenFeatured || aBordurenFeatured;
+      const bFeatured = bHakenFeatured || bBordurenFeatured;
+      if (aFeatured && !bFeatured) return -1;
+      if (!aFeatured && bFeatured) return 1;
+      
+      // Within featured items, sort by featured_order (lower number = more recent)
+      if (aFeatured && bFeatured) {
+        const aOrder = (a as any).featured_order_haken || (a as any).featured_order_borduren || 999;
+        const bOrder = (b as any).featured_order_haken || (b as any).featured_order_borduren || 999;
+        if (aOrder !== bOrder) return aOrder - bOrder;
+      }
+      
+      // For rest, sort by order then created_at
+      if (a.order !== b.order) return a.order - b.order;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
+    
+    res.json(sorted);
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error(e);
+    res.status(500).json({ error: 'List items failed' });
+  }
+});
+
+// Featured items for carousels by type (haken|borduren)
+app.get('/api/items/featured', async (req, res) => {
+  try {
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_KEY;
+    if (!supabaseUrl || !supabaseKey) {
+      res.status(500).json({ error: 'Supabase env vars not configured' });
+      return;
+    }
+    const type = String(req.query.type || '').toLowerCase();
+    if (type !== 'haken' && type !== 'borduren') {
+      res.status(400).json({ error: 'Invalid type. Use haken or borduren' });
+      return;
+    }
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    const featuredColumn = type === 'haken' ? 'featured_haken' : 'featured_borduren';
+    const orderColumn = type === 'haken' ? 'featured_order_haken' : 'featured_order_borduren';
+    const { data, error } = await supabase
+      .from('items')
       .select('*')
-      .order('order', { ascending: true })
-      .order('created_at', { ascending: false });
+      .filter(featuredColumn, 'eq', true)
+      .order(orderColumn, { ascending: true })
+      .limit(10);
     if (error) { res.status(500).json({ error: error.message }); return; }
     res.json(data || []);
   } catch (e) {
     // eslint-disable-next-line no-console
     console.error(e);
-    res.status(500).json({ error: 'List items failed' });
+    res.status(500).json({ error: 'List featured items failed' });
   }
 });
 
@@ -417,6 +484,87 @@ app.patch('/api/items/:id', requireAdmin, upload.array('images', 25), async (req
     };
     if (typeof req.body.is_favorite !== 'undefined') {
       updatePayload.is_favorite = String(req.body.is_favorite).toLowerCase() === 'true';
+    }
+
+    // Optional featured flags
+    const parseBool = (v: any) => String(v).toLowerCase() === 'true';
+    const wantFeaturedHaken = typeof (req.body as any).featured_haken !== 'undefined' ? parseBool((req.body as any).featured_haken) : undefined;
+    const wantFeaturedBorduren = typeof (req.body as any).featured_borduren !== 'undefined' ? parseBool((req.body as any).featured_borduren) : undefined;
+
+    if (typeof wantFeaturedHaken === 'boolean' || typeof wantFeaturedBorduren === 'boolean') {
+      // Enforce max 10 per type when enabling and set selection order
+      const supabaseForCount = createClient(supabaseUrl!, supabaseKey!);
+      if (wantFeaturedHaken === true) {
+        const { count } = await supabaseForCount
+          .from('items')
+          .select('*', { count: 'exact', head: true })
+          .eq('featured_haken', true);
+        if ((count || 0) >= 10 && !(existing as any).featured_haken) {
+          res.status(400).json({ error: 'Maximaal 10 uitgelichte items toegestaan voor Haken' });
+          return;
+        }
+        // Only set new order if this item wasn't already featured
+        if (!(existing as any).featured_haken) {
+          // Get all current featured items and their orders
+          const { data: currentFeatured } = await supabaseForCount
+            .from('items')
+            .select('id, featured_order_haken')
+            .eq('featured_haken', true);
+          
+          // Increment all existing orders by 1
+          if (currentFeatured && currentFeatured.length > 0) {
+            const updates = currentFeatured.map((item: any) => 
+              supabaseForCount
+                .from('items')
+                .update({ featured_order_haken: (item.featured_order_haken || 0) + 1 })
+                .eq('id', item.id)
+            );
+            await Promise.all(updates);
+          }
+          // Set this item to order 1 (shows first in carousel)
+          updatePayload.featured_order_haken = 1;
+        }
+        // If already featured, keep existing order
+      } else if (wantFeaturedHaken === false) {
+        updatePayload.featured_order_haken = null;
+      }
+      if (typeof wantFeaturedHaken === 'boolean') updatePayload.featured_haken = wantFeaturedHaken;
+
+      if (wantFeaturedBorduren === true) {
+        const { count } = await supabaseForCount
+          .from('items')
+          .select('*', { count: 'exact', head: true })
+          .eq('featured_borduren', true);
+        if ((count || 0) >= 10 && !(existing as any).featured_borduren) {
+          res.status(400).json({ error: 'Maximaal 10 uitgelichte items toegestaan voor Borduren' });
+          return;
+        }
+        // Only set new order if this item wasn't already featured
+        if (!(existing as any).featured_borduren) {
+          // Get all current featured items and their orders
+          const { data: currentFeatured } = await supabaseForCount
+            .from('items')
+            .select('id, featured_order_borduren')
+            .eq('featured_borduren', true);
+          
+          // Increment all existing orders by 1
+          if (currentFeatured && currentFeatured.length > 0) {
+            const updates = currentFeatured.map((item: any) => 
+              supabaseForCount
+                .from('items')
+                .update({ featured_order_borduren: (item.featured_order_borduren || 0) + 1 })
+                .eq('id', item.id)
+            );
+            await Promise.all(updates);
+          }
+          // Set this item to order 1 (shows first in carousel)
+          updatePayload.featured_order_borduren = 1;
+        }
+        // If already featured, keep existing order
+      } else if (wantFeaturedBorduren === false) {
+        updatePayload.featured_order_borduren = null;
+      }
+      if (typeof wantFeaturedBorduren === 'boolean') updatePayload.featured_borduren = wantFeaturedBorduren;
     }
 
     const { data, error } = await supabase

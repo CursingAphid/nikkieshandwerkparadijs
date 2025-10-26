@@ -54,9 +54,13 @@ function ActivityCard({
             <div className="text-sm text-gray-500 mb-2">{slug}</div>
           )}
           
-          {type === 'item' && price != null && (
-            <div className="text-lg font-medium text-green-600 mb-2">
-              €{price.toFixed(2)}
+          {type === 'item' && (
+            <div className="text-lg font-medium mb-2">
+              {price != null ? (
+                <span className="text-green-600">€{price.toFixed(2)}</span>
+              ) : (
+                <span className="text-gray-600">Prijs in overleg</span>
+              )}
             </div>
           )}
           

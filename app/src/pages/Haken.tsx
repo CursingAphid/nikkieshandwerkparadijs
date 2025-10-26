@@ -111,25 +111,33 @@ function Haken() {
           }
         }
 
+        // Get featured items for haken (fallback to sorted latest if request fails)
+        let featured: Item[] = []
+        try {
+          const featRes = await apiFetch('/items/featured?type=haken')
+          const featData = await featRes.json()
+          if (featRes.ok && Array.isArray(featData)) {
+            featured = featData as Item[]
+          }
+        } catch (_) {
+          // ignore, will fallback
+        }
+
         // Sort by order field first, then by creation date (newest first) and take the latest 10
         const sortedItems = allItems
           .sort((a, b) => {
-            // First sort by order (ascending)
-            if (a.order !== b.order) {
-              return a.order - b.order
-            }
-            // Then by creation date (newest first)
+            if (a.order !== b.order) return a.order - b.order
             return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
           })
           .slice(0, 10)
 
-            if (!cancelled) {
-              setCategories(hakenCategories)
-              setHeadcategories(hakenHeadcategories)
-              setItems(sortedItems)
-              setCategoryItems(categoryItemsMap)
-              setHeadcategoryItems(headcategoryItemsMap)
-            }
+        if (!cancelled) {
+          setCategories(hakenCategories)
+          setHeadcategories(hakenHeadcategories)
+          setItems(featured.length > 0 ? featured : sortedItems)
+          setCategoryItems(categoryItemsMap)
+          setHeadcategoryItems(headcategoryItemsMap)
+        }
       } catch (e: any) {
         if (!cancelled) setError(e.message || 'Failed to load items')
       } finally {
@@ -346,8 +354,10 @@ function Haken() {
                       </div>
                       <div className="p-4">
                         <h3 className="font-semibold text-lg mb-2 line-clamp-2">{item.name}</h3>
-                        {item.price != null && (
+                        {item.price != null ? (
                           <div className="text-green-600 font-medium">€{item.price.toFixed(2)}</div>
+                        ) : (
+                          <div className="text-gray-600 font-medium">Prijs in overleg</div>
                         )}
                       </div>
                     </div>

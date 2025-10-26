@@ -10,32 +10,44 @@ type Item = {
   created_at: string
 }
 
+type ItemWithFlags = Item & {
+  is_favorite?: boolean
+  featured_haken?: boolean
+  featured_borduren?: boolean
+  featured_order_haken?: number
+  featured_order_borduren?: number
+}
+
 function AdminItems() {
-  const [items, setItems] = useState<Item[]>([])
+  const [items, setItems] = useState<ItemWithFlags[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    let cancelled = false
-    async function load() {
-      try {
-        const res = await apiFetch('/items')
-        const json = await res.json()
-        if (!res.ok) throw new Error(json?.error || 'Failed to load items')
-        if (!cancelled) setItems(json)
-      } catch (e: any) {
-        if (!cancelled) setError(e.message || 'Failed to load items')
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
+  const featuredCount = (type: 'haken' | 'borduren') =>
+    items.filter((it) => (type === 'haken' ? it.featured_haken : it.featured_borduren)).length
+
+  const loadItems = async () => {
+    try {
+      const res = await apiFetch('/items')
+      const json = await res.json()
+      if (!res.ok) throw new Error(json?.error || 'Failed to load items')
+      setItems(json)
+    } catch (e: any) {
+      setError(e.message || 'Failed to load items')
+    } finally {
+      setLoading(false)
     }
-    load()
-    return () => { cancelled = true }
+  }
+
+  useEffect(() => {
+    setLoading(true)
+    loadItems()
   }, [])
 
   return (
     <div className="container">
       <h1 className="title">Alle items</h1>
+      <div className="mt-2 text-sm text-gray-600">Nieuwste Haken: {featuredCount('haken')} / 10 · Nieuwste Borduren: {featuredCount('borduren')} / 10</div>
       
       {loading && <p>Loading…</p>}
       {error && <p className="text-red-600">{error}</p>}
@@ -68,7 +80,7 @@ function AdminItems() {
                       })
                       const json = await res.json()
                       if (!res.ok) { alert(json?.error || 'Opslaan mislukt'); return }
-                      setItems((prev) => prev.map((it) => it.id === item.id ? ({ ...it, ...(json as any) }) : it))
+                      await loadItems()
                     }}
                   >
                     {(item as any).is_favorite ? (
@@ -83,7 +95,48 @@ function AdminItems() {
                       </svg>
                     )}
                   </button>
+                  {/* Featured toggles */}
+                  <div className="absolute top-10 right-2 flex flex-col gap-1 z-10">
+                    <button
+                      type="button"
+                      className={`px-2 py-1 rounded text-xs border w-20 ${item.featured_haken ? 'bg-green-600 text-white border-green-700' : 'bg-white text-green-700 border-green-600'}`}
+                      onClick={async () => {
+                        const next = !item.featured_haken
+                        if (next && featuredCount('haken') >= 10) { alert('Maximaal 10 uitgelichte items voor Haken'); return }
+                        const form = new FormData()
+                        form.append('featured_haken', String(next))
+                        const res = await apiFetch(`/items/${item.id}`, { method: 'PATCH', body: form })
+                        const json = await res.json()
+                        if (!res.ok) { alert(json?.error || 'Opslaan mislukt'); return }
+                        await loadItems()
+                      }}
+                    >
+                      Haken
+                    </button>
+                    <button
+                      type="button"
+                      className={`px-2 py-1 rounded text-xs border w-20 ${item.featured_borduren ? 'bg-blue-600 text-white border-blue-700' : 'bg-white text-blue-700 border-blue-600'}`}
+                      onClick={async () => {
+                        const next = !item.featured_borduren
+                        if (next && featuredCount('borduren') >= 10) { alert('Maximaal 10 uitgelichte items voor Borduren'); return }
+                        const form = new FormData()
+                        form.append('featured_borduren', String(next))
+                        const res = await apiFetch(`/items/${item.id}`, { method: 'PATCH', body: form })
+                        const json = await res.json()
+                        if (!res.ok) { alert(json?.error || 'Opslaan mislukt'); return }
+                        await loadItems()
+                      }}
+                    >
+                      Borduren
+                    </button>
+                  </div>
                   <div className="font-semibold text-lg mb-2">{item.name}</div>
+                  {(item.featured_haken || item.featured_borduren) && (
+                    <div className="text-xs text-gray-500 mb-2">
+                      {item.featured_haken && `Haken #${item.featured_order_haken} `}
+                      {item.featured_borduren && `Borduren #${item.featured_order_borduren}`}
+                    </div>
+                  )}
                   {item.price !== null && (
                     <div className="text-lg font-medium text-green-600 mb-2">
                       €{item.price.toFixed(2)}

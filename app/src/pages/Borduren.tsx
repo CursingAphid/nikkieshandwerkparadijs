@@ -111,14 +111,22 @@ function Borduren() {
           }
         }
 
+        // Get featured items for borduren (fallback to sorted latest if request fails)
+        let featured: Item[] = []
+        try {
+          const featRes = await apiFetch('/items/featured?type=borduren')
+          const featData = await featRes.json()
+          if (featRes.ok && Array.isArray(featData)) {
+            featured = featData as Item[]
+          }
+        } catch (_) {
+          // ignore, will fallback
+        }
+
         // Sort by order field first, then by creation date (newest first) and take the latest 10
         const sortedItems = allItems
           .sort((a, b) => {
-            // First sort by order (ascending)
-            if (a.order !== b.order) {
-              return a.order - b.order
-            }
-            // Then by creation date (newest first)
+            if (a.order !== b.order) return a.order - b.order
             return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
           })
           .slice(0, 10)
@@ -126,7 +134,7 @@ function Borduren() {
         if (!cancelled) {
           setCategories(bordurenCategories)
           setHeadcategories(bordurenHeadcategories)
-          setItems(sortedItems)
+          setItems(featured.length > 0 ? featured : sortedItems)
           setCategoryItems(categoryItemsMap)
           setHeadcategoryItems(headcategoryItemsMap)
         }
@@ -346,8 +354,10 @@ function Borduren() {
                         </div>
                         <div className="p-4">
                           <h3 className="font-semibold text-lg mb-2 line-clamp-2">{item.name}</h3>
-                          {item.price != null && (
+                          {item.price != null ? (
                             <div className="text-green-600 font-medium">€{item.price.toFixed(2)}</div>
+                          ) : (
+                            <div className="text-gray-600 font-medium">Prijs in overleg</div>
                           )}
                         </div>
                       </div>

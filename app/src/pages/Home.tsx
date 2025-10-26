@@ -261,9 +261,13 @@ function Home() {
                             <h3 className="font-semibold text-lg mb-2 line-clamp-2 text-gray-800">
                               {item.name}
                             </h3>
-                            {item.price != null && (
+                            {item.price != null ? (
                               <div className="text-green-600 font-medium">
                                 €{item.price.toFixed(2)}
+                              </div>
+                            ) : (
+                              <div className="text-gray-600 font-medium">
+                                Prijs in overleg
                               </div>
                             )}
                           </div>

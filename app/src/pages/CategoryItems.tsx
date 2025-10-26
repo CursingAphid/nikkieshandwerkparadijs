@@ -62,9 +62,13 @@ function SortableItem({ item }: { item: Item }) {
       className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-grab active:cursor-grabbing"
     >
       <div className="font-semibold text-lg mb-2">{item.name}</div>
-      {item.price !== null && (
+      {item.price !== null ? (
         <div className="text-lg font-medium text-green-600 mb-2">
           €{item.price.toFixed(2)}
+        </div>
+      ) : (
+        <div className="text-lg font-medium text-gray-600 mb-2">
+          Prijs in overleg
         </div>
       )}
       {Array.isArray(item.images) && item.images.length > 0 && (

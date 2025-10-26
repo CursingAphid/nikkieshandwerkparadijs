@@ -380,9 +380,13 @@ function ItemDetail() {
         <div>
           <h1 className="text-3xl md:text-4xl font-bold mb-4">{item.name}</h1>
           
-          {item.price != null && (
+          {item.price != null ? (
             <div className="text-2xl md:text-3xl font-semibold text-green-600 mb-6">
               €{item.price.toFixed(2)}
+            </div>
+          ) : (
+            <div className="text-2xl md:text-3xl font-semibold text-gray-600 mb-6">
+              Prijs in overleg
             </div>
           )}
 
@@ -463,9 +467,13 @@ function ItemDetail() {
                       <h3 className="font-semibold text-lg mb-2 line-clamp-2">
                         {it.name}
                       </h3>
-                      {it.price != null && (
+                      {it.price != null ? (
                         <div className="text-green-600 font-medium">
                           €{it.price.toFixed(2)}
+                        </div>
+                      ) : (
+                        <div className="text-gray-600 font-medium">
+                          Prijs in overleg
                         </div>
                       )}
                     </div>

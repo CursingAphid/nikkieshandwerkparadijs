@@ -437,8 +437,10 @@ function PublicHeader() {
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="font-medium text-gray-900 truncate">{item.name}</p>
-                              {item.price != null && (
+                              {item.price != null ? (
                                 <p className="text-sm text-green-600">€{item.price.toFixed(2)}</p>
+                              ) : (
+                                <p className="text-sm text-gray-600">Prijs in overleg</p>
                               )}
                             </div>
                           </Link>
@@ -795,8 +797,10 @@ function PublicHeader() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-gray-900 truncate">{item.name}</p>
-                            {item.price != null && (
+                            {item.price != null ? (
                               <p className="text-sm text-green-600">€{item.price.toFixed(2)}</p>
+                            ) : (
+                              <p className="text-sm text-gray-600">Prijs in overleg</p>
                             )}
                           </div>
                         </Link>
