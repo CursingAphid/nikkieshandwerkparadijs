@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import BordurenBanner from '../assets/banners/borduren_banner.png';
 import WolligeAchtergrond from '../assets/haken/wollige_achtergrond.png';
 import { apiFetch } from '../lib/api';
+import Marquee from 'react-fast-marquee';
 import { Link } from 'react-router-dom';
 
 type Item = {
@@ -316,8 +317,7 @@ function Borduren() {
             
             {!loading && !error && items.length > 0 && (
               <div className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]">
-                <div className="carousel">
-                  <div className="carousel-track">
+                <Marquee speed={35} gradient={false} pauseOnHover={true} autoFill={false}>
                   {[...items, ...items].map((item, idx) => {
                     const first = Array.isArray(item.images) && item.images.length > 0 ? item.images[0] : null
                     const itemSlug = slugify(item.name)
@@ -329,7 +329,7 @@ function Borduren() {
                     return (
                       <div 
                         key={`${item.id}-${idx}`} 
-                        className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-md w-56 md:w-64 lg:w-72 flex-shrink-0 cursor-pointer hover:shadow-lg transition-shadow"
+                        className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-md w-56 md:w-64 lg:w-72 flex-shrink-0 cursor-pointer hover:shadow-lg transition-shadow mx-2"
                         onClick={() => {
                           if (href !== '#') {
                             window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -353,8 +353,7 @@ function Borduren() {
                       </div>
                     )
                   })}
-                  </div>
-                </div>
+                </Marquee>
               </div>
             )}
             
