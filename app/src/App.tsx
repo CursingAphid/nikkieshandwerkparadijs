@@ -7,11 +7,7 @@ type FontOption = {
   className: string
 }
 
-const FONT_OPTIONS: FontOption[] = [
-  { label: 'Poppins', className: 'font-poppins' },
-  { label: 'Playfair Display', className: 'font-playfair' },
-  { label: 'Pacifico', className: 'font-pacifico' },
-]
+const DEFAULT_FONT = 'font-pacifico'
 
 const COLOR_OPTIONS = [
   '#dc2626', // red-600
@@ -231,7 +227,7 @@ async function recolorArmGreenToColor(armUrl: string, targetHex: string): Promis
 
 function App() {
   const [babyName, setBabyName] = useState('Nikki')
-  const [font, setFont] = useState(FONT_OPTIONS[0].className)
+  const font = DEFAULT_FONT
   const [color, setColor] = useState(COLOR_OPTIONS[3])
   const [pattern, setPattern] = useState<string | null>(null)
   const [processedTowel, setProcessedTowel] = useState<string | null>(null)
@@ -303,29 +299,23 @@ function App() {
 
   // Base towel image is imported for reliable bundling
   
-  // Process towel when selection or head changes: recolor red arm areas to dominant head color
+  // Process towel when selection or head changes: use towel as-is without recoloring
   useEffect(() => {
     let cancelled = false
     async function run() {
       if (!pattern) { setProcessedTowel(null); return }
       try {
-        // If no head selected yet, use towel as-is
-        if (!headSrc) {
-          const out = await replaceTowel(pattern)
-          if (!cancelled) setProcessedTowel(out)
-          return
-        }
-        const dom = await getDominantColorFromImage(headSrc)
-        const recolored = await recolorArmsToColor(pattern, dom)
-        if (!cancelled) setProcessedTowel(recolored)
+        // Always use towel as-is without any color changes
+        const out = await replaceTowel(pattern)
+        if (!cancelled) setProcessedTowel(out)
       } catch (e) {
-        console.error('Failed to process towel/arms:', e)
+        console.error('Failed to process towel:', e)
         if (!cancelled) setProcessedTowel(pattern)
       }
     }
     run()
     return () => { cancelled = true }
-  }, [pattern, headSrc])
+  }, [pattern])
 
   // Use original head image directly (no recoloring for now)
   useEffect(() => {
@@ -420,19 +410,20 @@ function App() {
           metrics = ctx.measureText(text)
         }
 
-        // Position ~28% from bottom relative to the contained image area
-        const y = dy + Math.floor(drawH * 0.72)
+        // Position ~32% from bottom relative to the contained image area (moved up slightly)
+        const y = dy + Math.floor(drawH * 0.68)
         const x = Math.floor(DESIGN_W * 0.5)
 
-        // Simple stitched look (shadow strokes) to mimic CSS
+        // Draw black border first (4px for better visibility)
         ctx.save()
-        ctx.lineWidth = Math.max(1, Math.round(size * 0.03))
-        ctx.strokeStyle = 'rgba(255,255,255,0.4)'
-        ctx.strokeText(text, x, y)
-        ctx.strokeStyle = 'rgba(0,0,0,0.15)'
-        ctx.translate(0, 1)
+        ctx.lineWidth = 4
+        ctx.lineJoin = 'round'
+        ctx.miterLimit = 2
+        ctx.strokeStyle = '#000000'
         ctx.strokeText(text, x, y)
         ctx.restore()
+        
+        // Then draw the text with the selected color
         ctx.fillText(text, x, y)
       } catch (e) {
         // If drawing fails, leave canvas blank rather than crashing
@@ -554,22 +545,6 @@ function App() {
                 className="input"
                 maxLength={10}
               />
-            </div>
-
-            {/* Font */}
-            <div style={{ marginBottom: 24 }}>
-              <label className="label">Lettertype</label>
-              <div className="font-grid">
-                {FONT_OPTIONS.map((f) => (
-                  <button
-                    key={f.label}
-                    onClick={() => setFont(f.className)}
-                    className={`btn-choice ${font === f.className ? 'active' : ''}`}
-                  >
-                    <span className={f.className}>{f.label}</span>
-                  </button>
-                ))}
-              </div>
             </div>
 
             {/* Color */}
