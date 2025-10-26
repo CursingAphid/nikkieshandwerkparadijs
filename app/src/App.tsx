@@ -2,11 +2,6 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import towelBase from './assets/towel examples/1.png'
 import './App.css'
 
-type FontOption = {
-  label: string
-  className: string
-}
-
 const DEFAULT_FONT = 'font-pacifico'
 
 const COLOR_OPTIONS = [
@@ -18,15 +13,10 @@ const COLOR_OPTIONS = [
   '#374151', // gray-700
 ]
 
-// --- Towel and color utilities ---
+// --- Towel utilities ---
 async function replaceTowel(towelImageUrl: string): Promise<string> {
   // Simply return the selected towel image directly
   return towelImageUrl
-}
-
-function rgbToHex(r: number, g: number, b: number): string {
-  const to2 = (n: number) => n.toString(16).padStart(2, '0')
-  return `#${to2(r)}${to2(g)}${to2(b)}`
 }
 
 function computeHueSaturation(r: number, g: number, b: number): { h: number; s: number; v: number } {
@@ -47,111 +37,12 @@ function computeHueSaturation(r: number, g: number, b: number): { h: number; s: 
   return { h, s, v }
 }
 
-function isRedPixel(r: number, g: number, b: number): boolean {
-  const { h, s, v } = computeHueSaturation(r, g, b)
-  // Red hue near 0/360 with reasonable saturation and brightness
-  const redHue = h <= 18 || h >= 342
-  return redHue && s >= 0.45 && v >= 0.25
-}
-
 function isGreenPixel(r: number, g: number, b: number): boolean {
   const { h, s, v } = computeHueSaturation(r, g, b)
   // Broader green hue range to catch more green pixels (90-150 degrees)
   const greenHue = h >= 90 && h <= 150
   // Lower thresholds to catch lighter/smaller green areas
   return greenHue && s >= 0.3 && v >= 0.2
-}
-
-type DominantBin = { count: number; r: number; g: number; b: number }
-
-async function getDominantColorFromImage(imgUrl: string): Promise<string> {
-  const img = new Image()
-  img.crossOrigin = 'anonymous'
-  img.src = imgUrl
-  await new Promise<void>((resolve, reject) => {
-    img.onload = () => resolve()
-    img.onerror = (e) => reject(e)
-  })
-  const sampleSize = 64
-  const canvas = document.createElement('canvas')
-  canvas.width = sampleSize
-  canvas.height = sampleSize
-  const ctx = canvas.getContext('2d')!
-  ctx.drawImage(img, 0, 0, sampleSize, sampleSize)
-  const { data } = ctx.getImageData(0, 0, sampleSize, sampleSize)
-  const bins: Map<string, DominantBin> = new Map()
-  for (let i = 0; i < data.length; i += 4) {
-    const a = data[i + 3]
-    if (a < 128) continue
-    const r = data[i], g = data[i + 1], b = data[i + 2]
-    // Skip near-white and near-black pixels
-    const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b
-    if (lum < 16 || lum > 245) continue
-    const rq = r >> 4, gq = g >> 4, bq = b >> 4
-    const key = `${rq}-${gq}-${bq}`
-    const cur: DominantBin = bins.get(key) || { count: 0, r: 0, g: 0, b: 0 }
-    cur.count += 1
-    cur.r += r
-    cur.g += g
-    cur.b += b
-    bins.set(key, cur)
-  }
-  
-  // Find the bin with the highest count
-  let maxCount = 0
-  let bestBin: DominantBin = { count: 0, r: 0, g: 0, b: 0 }
-  
-  bins.forEach((bin) => {
-    if (bin.count > maxCount) {
-      maxCount = bin.count
-      bestBin = bin
-    }
-  })
-  
-  if (bestBin.count === 0) return '#c2410c' // fallback amber-ish
-  
-  const r = Math.round(bestBin.r / bestBin.count)
-  const g = Math.round(bestBin.g / bestBin.count)
-  const b = Math.round(bestBin.b / bestBin.count)
-  return rgbToHex(r, g, b)
-}
-
-async function recolorArmsToColor(towelUrl: string, targetHex: string): Promise<string> {
-  const img = new Image()
-  img.crossOrigin = 'anonymous'
-  img.src = towelUrl
-  await new Promise<void>((resolve, reject) => {
-    img.onload = () => resolve()
-    img.onerror = (e) => reject(e)
-  })
-  const canvas = document.createElement('canvas')
-  canvas.width = img.naturalWidth
-  canvas.height = img.naturalHeight
-  const ctx = canvas.getContext('2d')!
-  ctx.drawImage(img, 0, 0)
-  const image = ctx.getImageData(0, 0, canvas.width, canvas.height)
-  const data = image.data
-  // target color
-  const clean = targetHex.replace('#', '')
-  const bigint = parseInt(clean, 16)
-  const tr = (bigint >> 16) & 255
-  const tg = (bigint >> 8) & 255
-  const tb = bigint & 255
-  for (let i = 0; i < data.length; i += 4) {
-    const a = data[i + 3]
-    if (a === 0) continue
-    const r = data[i]
-    const g = data[i + 1]
-    const b = data[i + 2]
-    if (!isRedPixel(r, g, b)) continue
-    // Preserve shading: compute luminance and scale target
-    const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b
-    data[i] = Math.round((tr * lum) / 255)
-    data[i + 1] = Math.round((tg * lum) / 255)
-    data[i + 2] = Math.round((tb * lum) / 255)
-  }
-  ctx.putImageData(image, 0, 0)
-  return canvas.toDataURL('image/png')
 }
 
 async function recolorArmGreenToColor(armUrl: string, targetHex: string): Promise<string> {
