@@ -19,22 +19,22 @@ function AdminCategories() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    let cancelled = false
-    async function load() {
-      try {
-        const res = await apiFetch('/categories')
-        const json = await res.json()
-        if (!res.ok) throw new Error(json?.error || 'Failed to load categories')
-        if (!cancelled) setCategories(json)
-      } catch (e: any) {
-        if (!cancelled) setError(e.message || 'Failed to load categories')
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
+  const loadCategories = async () => {
+    try {
+      const res = await apiFetch('/categories')
+      const json = await res.json()
+      if (!res.ok) throw new Error(json?.error || 'Failed to load categories')
+      setCategories(json)
+    } catch (e: any) {
+      setError(e.message || 'Failed to load categories')
+    } finally {
+      setLoading(false)
     }
-    load()
-    return () => { cancelled = true }
+  }
+
+  useEffect(() => {
+    setLoading(true)
+    loadCategories()
   }, [])
 
   return (
@@ -62,6 +62,18 @@ function AdminCategories() {
                   headimageurl={cat.headimageurl}
                   viewHref={`/admin/categories/${cat.id}/items`}
                   useIcons
+                  onDelete={async () => {
+                    if (!confirm(`Weet je zeker dat je "${cat.name}" wilt verwijderen? Dit kan niet ongedaan worden gemaakt.`)) {
+                      return
+                    }
+                    const res = await apiFetch(`/categories/${cat.id}`, { method: 'DELETE' })
+                    if (!res.ok) {
+                      const json = await res.json()
+                      alert(json?.error || 'Verwijderen mislukt')
+                      return
+                    }
+                    await loadCategories()
+                  }}
                 />
               ))}
             </div>

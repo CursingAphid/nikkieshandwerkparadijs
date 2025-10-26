@@ -158,6 +158,24 @@ function AdminItems() {
                     <Link className="btn" to={`/admin/items/${item.id}/edit`}>
                       Bewerken
                     </Link>
+                    <button
+                      className="btn"
+                      style={{ background: '#dc2626', color: 'white' }}
+                      onClick={async () => {
+                        if (!confirm(`Weet je zeker dat je "${item.name}" wilt verwijderen? Dit kan niet ongedaan worden gemaakt.`)) {
+                          return
+                        }
+                        const res = await apiFetch(`/items/${item.id}`, { method: 'DELETE' })
+                        if (!res.ok) {
+                          const json = await res.json()
+                          alert(json?.error || 'Verwijderen mislukt')
+                          return
+                        }
+                        await loadItems()
+                      }}
+                    >
+                      Verwijderen
+                    </button>
                   </div>
                 </div>
               ))}

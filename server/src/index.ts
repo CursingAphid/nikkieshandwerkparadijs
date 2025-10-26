@@ -805,6 +805,27 @@ app.delete('/api/categories/:id/headimage', requireAdmin, async (req, res) => {
   }
 });
 
+// Delete category
+app.delete('/api/categories/:id', requireAdmin, async (req, res) => {
+  try {
+    const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_KEY!);
+    
+    // Delete category
+    const { error } = await supabase.from('categories').delete().eq('id', req.params.id);
+    
+    if (error) {
+      res.status(500).json({ error: error.message });
+      return;
+    }
+    
+    res.json({ success: true });
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error(e);
+    res.status(500).json({ error: 'Delete category failed' });
+  }
+});
+
 // Items in a category
 app.get('/api/categories/:id/items', async (req, res) => {
   try {
@@ -882,6 +903,30 @@ app.patch('/api/items/:id/order', requireAdmin, async (req, res) => {
     // eslint-disable-next-line no-console
     console.error(e);
     res.status(500).json({ error: 'Update item order failed' });
+  }
+});
+
+// Delete item
+app.delete('/api/items/:id', requireAdmin, async (req, res) => {
+  try {
+    const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_KEY!);
+    
+    // First, delete item_category links
+    await supabase.from('item_categories').delete().eq('item_id', req.params.id);
+    
+    // Then delete the item
+    const { error } = await supabase.from('items').delete().eq('id', req.params.id);
+    
+    if (error) {
+      res.status(500).json({ error: error.message });
+      return;
+    }
+    
+    res.json({ success: true });
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error(e);
+    res.status(500).json({ error: 'Delete item failed' });
   }
 });
 
