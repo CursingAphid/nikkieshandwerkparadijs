@@ -7,7 +7,7 @@ function NewHeadCategory() {
   const navigate = useNavigate()
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
-  const [type, setType] = useState<'haken' | 'borduren' | ''>('')
+  const [type, setType] = useState<'haken' | 'borduren' | 'combi' | ''>('')
   const [headimage, setHeadimage] = useState<File | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -25,7 +25,7 @@ function NewHeadCategory() {
       form.append('description', description)
       form.append('type', type)
       if (headimage) form.append('headimage', headimage)
-      
+
       const res = await apiFetch('/headcategories', {
         method: 'POST',
         body: form
@@ -43,46 +43,47 @@ function NewHeadCategory() {
   return (
     <div className="container">
       <h1 className="title">New Head Category</h1>
-      
+
       <div className="card" style={{ maxWidth: 640 }}>
         <form onSubmit={onSubmit}>
           <div style={{ display: 'grid', gap: 12 }}>
             <div>
               <label className="label">Name</label>
-              <input 
-                className="input" 
-                value={name} 
-                onChange={(e) => setName(e.target.value)} 
-                required 
+              <input
+                className="input"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
               />
             </div>
             <div>
               <label className="label">Slug (auto-generated)</label>
-              <input 
-                className="input bg-gray-100" 
-                value={slugFromName} 
+              <input
+                className="input bg-gray-100"
+                value={slugFromName}
                 readOnly
                 placeholder="Will be generated from name"
               />
             </div>
             <div>
               <label className="label">Type</label>
-              <select 
-                className="input" 
-                value={type} 
-                onChange={(e) => setType(e.target.value as 'haken' | 'borduren' | '')}
+              <select
+                className="input"
+                value={type}
+                onChange={(e) => setType(e.target.value as 'haken' | 'borduren' | 'combi' | '')}
                 required
               >
                 <option value="">Select type...</option>
                 <option value="haken">Haken</option>
                 <option value="borduren">Borduren</option>
+                <option value="combi">Combi</option>
               </select>
             </div>
             <div>
               <label className="label">Description</label>
-              <textarea 
-                className="input" 
-                value={description} 
+              <textarea
+                className="input"
+                value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
               />
@@ -106,7 +107,7 @@ function NewHeadCategory() {
             </button>
           </div>
         </form>
-        
+
         {error && (
           <div className="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
             {error}

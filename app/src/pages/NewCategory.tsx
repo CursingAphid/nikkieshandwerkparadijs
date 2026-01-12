@@ -14,7 +14,7 @@ function NewCategory() {
   const navigate = useNavigate()
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
-  const [type, setType] = useState<'haken' | 'borduren' | ''>('')
+  const [type, setType] = useState<'haken' | 'borduren' | 'combi' | ''>('')
   const [headimage, setHeadimage] = useState<File | null>(null)
   const [headcategoryId, setHeadcategoryId] = useState<number | ''>('')
   const [headcategories, setHeadcategories] = useState<HeadCategory[]>([])
@@ -32,7 +32,7 @@ function NewCategory() {
         const json = await res.json()
         if (!res.ok) return
         if (!cancelled) setHeadcategories(json)
-      } catch {}
+      } catch { }
     }
     loadHeadcategories()
     return () => { cancelled = true }
@@ -50,23 +50,23 @@ function NewCategory() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
-    
+
     // Validation
     if (belongsToHeadcategory === null) {
       setError('Please select whether this category belongs to a head category')
       return
     }
-    
+
     if (belongsToHeadcategory && !headcategoryId) {
       setError('Please select a head category')
       return
     }
-    
+
     if (!belongsToHeadcategory && !type) {
-      setError('Please select a type (Haken or Borduren)')
+      setError('Please select a type (Haken, Borduren, or Combi)')
       return
     }
-    
+
     try {
       setSaving(true)
       const form = new FormData()
@@ -76,7 +76,7 @@ function NewCategory() {
       form.append('type', getFinalType())
       if (headimage) form.append('headimage', headimage)
       if (headcategoryId) form.append('headcategoryId', String(headcategoryId))
-      
+
       const res = await apiFetch('/categories', {
         method: 'POST',
         body: form
@@ -94,24 +94,24 @@ function NewCategory() {
   return (
     <div className="container">
       <h1 className="title">New Category</h1>
-      
+
       <div className="card" style={{ maxWidth: 640 }}>
         <form onSubmit={onSubmit}>
           <div style={{ display: 'grid', gap: 12 }}>
             <div>
               <label className="label">Name</label>
-              <input 
-                className="input" 
-                value={name} 
-                onChange={(e) => setName(e.target.value)} 
-                required 
+              <input
+                className="input"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
               />
             </div>
             <div>
               <label className="label">Slug (auto-generated)</label>
-              <input 
-                className="input bg-gray-100" 
-                value={slugFromName} 
+              <input
+                className="input bg-gray-100"
+                value={slugFromName}
                 readOnly
                 placeholder="Will be generated from name"
               />
@@ -151,9 +151,9 @@ function NewCategory() {
             {belongsToHeadcategory === true && (
               <div>
                 <label className="label">Head Category</label>
-                <select 
-                  className="input" 
-                  value={headcategoryId} 
+                <select
+                  className="input"
+                  value={headcategoryId}
                   onChange={(e) => setHeadcategoryId(e.target.value ? parseInt(e.target.value) : '')}
                   required
                 >
@@ -175,23 +175,24 @@ function NewCategory() {
             {belongsToHeadcategory === false && (
               <div>
                 <label className="label">Type</label>
-                <select 
-                  className="input" 
-                  value={type} 
-                  onChange={(e) => setType(e.target.value as 'haken' | 'borduren' | '')}
+                <select
+                  className="input"
+                  value={type}
+                  onChange={(e) => setType(e.target.value as 'haken' | 'borduren' | 'combi' | '')}
                   required
                 >
                   <option value="">Select type...</option>
                   <option value="haken">Haken</option>
                   <option value="borduren">Borduren</option>
+                  <option value="combi">Combi</option>
                 </select>
               </div>
             )}
             <div>
               <label className="label">Description</label>
-              <textarea 
-                className="input" 
-                value={description} 
+              <textarea
+                className="input"
+                value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
               />

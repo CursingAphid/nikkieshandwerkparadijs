@@ -78,7 +78,7 @@ app.post('/api/admin/login', (req, res) => {
     const frontendOrigin = process.env.FRONTEND_ORIGIN || '';
     const isLocalFrontend = /localhost|127\.0\.0\.1/i.test(frontendOrigin);
     const sameSite: 'lax' | 'none' = (!isLocalFrontend && isProd) ? 'none' : 'lax';
-    
+
     res.cookie('admin', '1', {
       httpOnly: true,
       sameSite,
@@ -217,7 +217,7 @@ app.get('/api/items', async (_req, res) => {
       .from('items')
       .select('*');
     if (error) { res.status(500).json({ error: error.message }); return; }
-    
+
     // Sort: favorites first (ordered by order, then created_at), then featured, then all others
     const sorted = (data || []).sort((a, b) => {
       const aFav = (a as any).is_favorite || false;
@@ -226,7 +226,7 @@ app.get('/api/items', async (_req, res) => {
       const bHakenFeatured = (b as any).featured_haken || false;
       const aBordurenFeatured = (a as any).featured_borduren || false;
       const bBordurenFeatured = (b as any).featured_borduren || false;
-      
+
       // Favorites group first
       if (aFav && !bFav) return -1;
       if (!aFav && bFav) return 1;
@@ -235,25 +235,25 @@ app.get('/api/items', async (_req, res) => {
         if (a.order !== b.order) return a.order - b.order;
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       }
-      
+
       // Featured items next (for both haken and borduren)
       const aFeatured = aHakenFeatured || aBordurenFeatured;
       const bFeatured = bHakenFeatured || bBordurenFeatured;
       if (aFeatured && !bFeatured) return -1;
       if (!aFeatured && bFeatured) return 1;
-      
+
       // Within featured items, sort by featured_order (lower number = more recent)
       if (aFeatured && bFeatured) {
         const aOrder = (a as any).featured_order_haken || (a as any).featured_order_borduren || 999;
         const bOrder = (b as any).featured_order_haken || (b as any).featured_order_borduren || 999;
         if (aOrder !== bOrder) return aOrder - bOrder;
       }
-      
+
       // For rest, sort by order then created_at
       if (a.order !== b.order) return a.order - b.order;
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
-    
+
     res.json(sorted);
   } catch (e) {
     // eslint-disable-next-line no-console
@@ -272,11 +272,19 @@ app.get('/api/items/featured', async (req, res) => {
       return;
     }
     const type = String(req.query.type || '').toLowerCase();
-    if (type !== 'haken' && type !== 'borduren') {
-      res.status(400).json({ error: 'Invalid type. Use haken or borduren' });
+    if (type !== 'haken' && type !== 'borduren' && type !== 'combi') {
+      res.status(400).json({ error: 'Invalid type. Use haken, borduren or combi' });
       return;
     }
     const supabase = createClient(supabaseUrl, supabaseKey);
+    // For Combi, we don't have featured columns yet, so return empty to let frontend fallback to latest items
+    if (type === 'combi') {
+      res.json([]);
+      return;
+    }
+
+
+
     const featuredColumn = type === 'haken' ? 'featured_haken' : 'featured_borduren';
     const orderColumn = type === 'haken' ? 'featured_order_haken' : 'featured_order_borduren';
     const { data, error } = await supabase
@@ -299,22 +307,22 @@ app.patch('/api/items/orders', requireAdmin, async (req, res) => {
   try {
     const { items } = req.body || {};
     const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_KEY!);
-    
+
     if (!Array.isArray(items)) {
       res.status(400).json({ error: 'Items must be an array' });
       return;
     }
-    
+
     // Update each item's order
-    const updates = items.map((item: { id: number; order: number }) => 
+    const updates = items.map((item: { id: number; order: number }) =>
       supabase
         .from('items')
         .update({ order: item.order })
         .eq('id', item.id)
     );
-    
+
     const results = await Promise.all(updates);
-    
+
     // Check for errors
     for (const result of results) {
       if (result.error) {
@@ -322,7 +330,7 @@ app.patch('/api/items/orders', requireAdmin, async (req, res) => {
         return;
       }
     }
-    
+
     res.json({ success: true });
   } catch (e) {
     // eslint-disable-next-line no-console
@@ -336,22 +344,22 @@ app.patch('/api/categories/orders', requireAdmin, async (req, res) => {
   try {
     const { categories } = req.body || {};
     const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_KEY!);
-    
+
     if (!Array.isArray(categories)) {
       res.status(400).json({ error: 'Categories must be an array' });
       return;
     }
-    
+
     // Update each category's order
-    const updates = categories.map((category: { id: number; order: number }) => 
+    const updates = categories.map((category: { id: number; order: number }) =>
       supabase
         .from('categories')
         .update({ order: category.order })
         .eq('id', category.id)
     );
-    
+
     const results = await Promise.all(updates);
-    
+
     // Check for errors
     for (const result of results) {
       if (result.error) {
@@ -359,7 +367,7 @@ app.patch('/api/categories/orders', requireAdmin, async (req, res) => {
         return;
       }
     }
-    
+
     res.json({ success: true });
   } catch (e) {
     // eslint-disable-next-line no-console
@@ -510,10 +518,10 @@ app.patch('/api/items/:id', requireAdmin, upload.array('images', 25), async (req
             .from('items')
             .select('id, featured_order_haken')
             .eq('featured_haken', true);
-          
+
           // Increment all existing orders by 1
           if (currentFeatured && currentFeatured.length > 0) {
-            const updates = currentFeatured.map((item: any) => 
+            const updates = currentFeatured.map((item: any) =>
               supabaseForCount
                 .from('items')
                 .update({ featured_order_haken: (item.featured_order_haken || 0) + 1 })
@@ -546,10 +554,10 @@ app.patch('/api/items/:id', requireAdmin, upload.array('images', 25), async (req
             .from('items')
             .select('id, featured_order_borduren')
             .eq('featured_borduren', true);
-          
+
           // Increment all existing orders by 1
           if (currentFeatured && currentFeatured.length > 0) {
-            const updates = currentFeatured.map((item: any) => 
+            const updates = currentFeatured.map((item: any) =>
               supabaseForCount
                 .from('items')
                 .update({ featured_order_borduren: (item.featured_order_borduren || 0) + 1 })
@@ -640,35 +648,35 @@ app.delete('/api/items/:id/images', requireAdmin, async (req, res) => {
 app.get('/api/categories', async (_req, res) => {
   try {
     const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_KEY!);
-    
+
     // Get all categories
     const { data: categories, error: categoriesError } = await supabase
       .from('categories')
       .select('*')
       .order('order', { ascending: true })
       .order('created_at', { ascending: false });
-    
-    if (categoriesError) { 
-      res.status(500).json({ error: categoriesError.message }); 
-      return; 
+
+    if (categoriesError) {
+      res.status(500).json({ error: categoriesError.message });
+      return;
     }
-    
+
     // Get headcategory links for all categories
     const { data: links, error: linksError } = await supabase
       .from('headcategories_categories')
       .select('category_id, headcategory_id');
-    
+
     if (linksError) {
       console.error('Failed to load headcategory links:', linksError);
       // Continue without links - categories will have headcategory_id as null
     }
-    
+
     // Add headcategory_id to each category
     const categoriesWithHeadcategory = (categories || []).map(category => ({
       ...category,
       headcategory_id: links?.find(link => link.category_id === category.id)?.headcategory_id || null
     }));
-    
+
     res.json(categoriesWithHeadcategory);
   } catch (e) {
     console.error(e);
@@ -681,7 +689,7 @@ app.post('/api/categories', requireAdmin, upload.single('headimage'), async (req
   try {
     const { name, slug, description, type, headcategoryId } = req.body || {};
     const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_KEY!);
-    
+
     let headimageurl = null;
     if (req.file) {
       const fileExt = req.file.originalname.split('.').pop();
@@ -691,22 +699,22 @@ app.post('/api/categories', requireAdmin, upload.single('headimage'), async (req
         .upload(`categories/${fileName}`, req.file.buffer, {
           contentType: req.file.mimetype,
         });
-      
+
       if (uploadError) {
         res.status(500).json({ error: uploadError.message });
         return;
       }
-      
+
       const { data: urlData } = supabase.storage
         .from(process.env.SUPABASE_BUCKET || 'uploads')
         .getPublicUrl(`categories/${fileName}`);
       headimageurl = urlData.publicUrl;
     }
-    
+
     const { data, error } = await supabase
       .from('categories')
-      .insert({ 
-        name: String(name || '').trim(), 
+      .insert({
+        name: String(name || '').trim(),
         slug: String(slug || '').trim(),
         description: description ? String(description).trim() : null,
         type: type ? String(type).trim() : null,
@@ -715,21 +723,21 @@ app.post('/api/categories', requireAdmin, upload.single('headimage'), async (req
       .select()
       .single();
     if (error) { res.status(500).json({ error: error.message }); return; }
-    
+
     // Link to headcategory if provided
     if (headcategoryId && parseInt(headcategoryId)) {
       const { error: linkErr } = await supabase
         .from('headcategories_categories')
-        .insert({ 
-          headcategory_id: parseInt(headcategoryId), 
-          category_id: data.id 
+        .insert({
+          headcategory_id: parseInt(headcategoryId),
+          category_id: data.id
         });
       if (linkErr) {
         console.error('Failed to link category to headcategory:', linkErr);
         // Don't fail the request, just log the error
       }
     }
-    
+
     res.status(201).json(data);
   } catch (e) {
     // eslint-disable-next-line no-console
@@ -743,14 +751,14 @@ app.patch('/api/categories/:id', requireAdmin, upload.single('headimage'), async
   try {
     const { name, slug, description, type } = req.body || {};
     const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_KEY!);
-    
+
     const updateData: any = {
       name: name != null ? String(name) : undefined,
       slug: slug != null ? String(slug) : undefined,
       description: description != null ? String(description).trim() : undefined,
       type: type != null ? String(type).trim() : undefined
     };
-    
+
     if (req.file) {
       const fileExt = req.file.originalname.split('.').pop();
       const fileName = `category-${Date.now()}.${fileExt}`;
@@ -759,18 +767,18 @@ app.patch('/api/categories/:id', requireAdmin, upload.single('headimage'), async
         .upload(`categories/${fileName}`, req.file.buffer, {
           contentType: req.file.mimetype,
         });
-      
+
       if (uploadError) {
         res.status(500).json({ error: uploadError.message });
         return;
       }
-      
+
       const { data: urlData } = supabase.storage
         .from(process.env.SUPABASE_BUCKET || 'uploads')
         .getPublicUrl(`categories/${fileName}`);
       updateData.headimageurl = urlData.publicUrl;
     }
-    
+
     const { data, error } = await supabase
       .from('categories')
       .update(updateData)
@@ -809,15 +817,15 @@ app.delete('/api/categories/:id/headimage', requireAdmin, async (req, res) => {
 app.delete('/api/categories/:id', requireAdmin, async (req, res) => {
   try {
     const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_KEY!);
-    
+
     // Delete category
     const { error } = await supabase.from('categories').delete().eq('id', req.params.id);
-    
+
     if (error) {
       res.status(500).json({ error: error.message });
       return;
     }
-    
+
     res.json({ success: true });
   } catch (e) {
     // eslint-disable-next-line no-console
@@ -880,24 +888,24 @@ app.patch('/api/items/:id/order', requireAdmin, async (req, res) => {
   try {
     const { order } = req.body || {};
     const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_KEY!);
-    
+
     if (typeof order !== 'number' || order < 0) {
       res.status(400).json({ error: 'Order must be a non-negative number' });
       return;
     }
-    
+
     const { data, error } = await supabase
       .from('items')
       .update({ order })
       .eq('id', req.params.id)
       .select()
       .single();
-    
-    if (error) { 
-      res.status(500).json({ error: error.message }); 
-      return; 
+
+    if (error) {
+      res.status(500).json({ error: error.message });
+      return;
     }
-    
+
     res.json(data);
   } catch (e) {
     // eslint-disable-next-line no-console
@@ -910,18 +918,18 @@ app.patch('/api/items/:id/order', requireAdmin, async (req, res) => {
 app.delete('/api/items/:id', requireAdmin, async (req, res) => {
   try {
     const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_KEY!);
-    
+
     // First, delete item_category links
     await supabase.from('item_categories').delete().eq('item_id', req.params.id);
-    
+
     // Then delete the item
     const { error } = await supabase.from('items').delete().eq('id', req.params.id);
-    
+
     if (error) {
       res.status(500).json({ error: error.message });
       return;
     }
-    
+
     res.json({ success: true });
   } catch (e) {
     // eslint-disable-next-line no-console
@@ -966,7 +974,7 @@ app.post('/api/headcategories', requireAdmin, upload.single('headimage'), async 
   try {
     const { name, slug, description, type } = req.body || {};
     const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_KEY!);
-    
+
     let headimageurl = null;
     if (req.file) {
       const fileExt = req.file.originalname.split('.').pop();
@@ -976,22 +984,22 @@ app.post('/api/headcategories', requireAdmin, upload.single('headimage'), async 
         .upload(`headcategories/${fileName}`, req.file.buffer, {
           contentType: req.file.mimetype,
         });
-      
+
       if (uploadError) {
         res.status(500).json({ error: uploadError.message });
         return;
       }
-      
+
       const { data: urlData } = supabase.storage
         .from(process.env.SUPABASE_BUCKET || 'uploads')
         .getPublicUrl(`headcategories/${fileName}`);
       headimageurl = urlData.publicUrl;
     }
-    
+
     const { data, error } = await supabase
       .from('headcategories')
-      .insert({ 
-        name: String(name || '').trim(), 
+      .insert({
+        name: String(name || '').trim(),
         slug: String(slug || '').trim(),
         description: description ? String(description).trim() : null,
         type: type ? String(type).trim() : null,
@@ -1013,14 +1021,14 @@ app.patch('/api/headcategories/:id', requireAdmin, upload.single('headimage'), a
   try {
     const { name, slug, description, type } = req.body || {};
     const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_KEY!);
-    
+
     const updateData: any = {
       name: name != null ? String(name) : undefined,
       slug: slug != null ? String(slug) : undefined,
       description: description != null ? String(description).trim() : undefined,
       type: type != null ? String(type).trim() : undefined
     };
-    
+
     if (req.file) {
       const fileExt = req.file.originalname.split('.').pop();
       const fileName = `headcategory-${Date.now()}.${fileExt}`;
@@ -1029,18 +1037,18 @@ app.patch('/api/headcategories/:id', requireAdmin, upload.single('headimage'), a
         .upload(`headcategories/${fileName}`, req.file.buffer, {
           contentType: req.file.mimetype,
         });
-      
+
       if (uploadError) {
         res.status(500).json({ error: uploadError.message });
         return;
       }
-      
+
       const { data: urlData } = supabase.storage
         .from(process.env.SUPABASE_BUCKET || 'uploads')
         .getPublicUrl(`headcategories/${fileName}`);
       updateData.headimageurl = urlData.publicUrl;
     }
-    
+
     const { data, error } = await supabase
       .from('headcategories')
       .update(updateData)
@@ -1119,11 +1127,11 @@ app.post('/api/headcategories/:id/categories', requireAdmin, async (req, res) =>
   try {
     const { categoryIds } = req.body || {};
     const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_KEY!);
-    
+
     if (categoryIds && Array.isArray(categoryIds) && categoryIds.length > 0) {
-      const rows = categoryIds.map((cid: number) => ({ 
-        headcategory_id: parseInt(req.params.id), 
-        category_id: cid 
+      const rows = categoryIds.map((cid: number) => ({
+        headcategory_id: parseInt(req.params.id),
+        category_id: cid
       }));
       const { error: linkErr } = await supabase.from('headcategories_categories').insert(rows);
       if (linkErr) {
@@ -1131,7 +1139,7 @@ app.post('/api/headcategories/:id/categories', requireAdmin, async (req, res) =>
         return;
       }
     }
-    
+
     res.json({ success: true });
   } catch (e) {
     // eslint-disable-next-line no-console

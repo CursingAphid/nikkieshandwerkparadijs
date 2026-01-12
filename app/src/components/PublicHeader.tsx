@@ -232,8 +232,8 @@ function PublicHeader() {
     }
   }
 
-  // Get dropdown data for a specific type (haken or borduren)
-  const getDropdownData = (type: 'haken' | 'borduren') => {
+  // Get dropdown data for a specific type (haken, borduren, or combi)
+  const getDropdownData = (type: 'haken' | 'borduren' | 'combi') => {
     const headcats = headcategories.filter(hc => hc.type === type)
     const standaloneCats = categories.filter(c => 
       c.type === type && 
@@ -271,7 +271,7 @@ function PublicHeader() {
 
   // Navigation link with dropdown support
   const navLink = (to: string, label: string, hasDropdown: boolean = false) => {
-    const dropdownData = hasDropdown ? getDropdownData(label.toLowerCase() as 'haken' | 'borduren') : null
+    const dropdownData = hasDropdown ? getDropdownData(label.toLowerCase() as 'haken' | 'borduren' | 'combi') : null
     
     return (
       <div 
@@ -491,6 +491,7 @@ function PublicHeader() {
               {link('/', 'Home')}
               {navLink('/werkjes/haken', 'Haken', true)}
               {navLink('/werkjes/borduren', 'Borduren', true)}
+              {navLink('/werkjes/combi', 'Combi', true)}
               {link('/over', 'Over')}
               {link('/contact', 'Contact')}
               {link('/build', 'Stel je eigen set samen')}
@@ -678,6 +679,83 @@ function PublicHeader() {
                           ) : (
                             <Link
                               to={`/werkjes/borduren/${item.slug}`}
+                              onClick={() => setMobileMenuOpen(false)}
+                              className="block px-3 py-1 text-xs text-gray-600 hover:text-gray-800"
+                            >
+                              {item.name}
+                            </Link>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )
+                })()}
+              </div>
+              
+              {/* Combi with submenu */}
+              <div>
+                <Link
+                  to="/werkjes/combi"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`block px-3 py-2 rounded-md text-sm font-medium ${is('/werkjes/combi') ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-100'}`}
+                >
+                  Combi
+                </Link>
+                {(() => {
+                  const dropdownData = getDropdownData('combi')
+                  return (
+                    <div className="ml-4 space-y-1">
+                      {dropdownData.map((item) => (
+                        <div key={item.id}>
+                          {item.isHeadcategory ? (
+                            <div>
+                              <div className="px-3 py-1 text-xs text-gray-600 font-medium flex items-center justify-between">
+                                <Link
+                                  to={`/werkjes/combi/${item.slug}`}
+                                  onClick={() => setMobileMenuOpen(false)}
+                                  className="flex-1"
+                                >
+                                  {item.name}
+                                </Link>
+                                <button
+                                  className="ml-2 p-1 text-gray-400 hover:text-gray-600 touch-manipulation"
+                                  onClick={(e) => {
+                                    e.preventDefault()
+                                    e.stopPropagation()
+                                    toggleHeadcategory(item.id)
+                                  }}
+                                  type="button"
+                                  aria-label={`Toggle ${item.name} submenu`}
+                                >
+                                  <span 
+                                    className="transition-transform duration-200"
+                                    style={{ 
+                                      transform: expandedHeadcategories.has(item.id) ? 'rotate(90deg)' : 'rotate(0deg)',
+                                      display: 'inline-block'
+                                    }}
+                                  >
+                                    ▶
+                                  </span>
+                                </button>
+                              </div>
+                              {expandedHeadcategories.has(item.id) && item.subcategories && item.subcategories.length > 0 && (
+                                <div className="ml-4 space-y-1">
+                                  {item.subcategories.map((subcat) => (
+                                    <Link
+                                      key={subcat.id}
+                                      to={`/werkjes/combi/${item.slug}/${subcat.slug}`}
+                                      onClick={() => setMobileMenuOpen(false)}
+                                      className="block px-3 py-1 text-xs text-gray-500 hover:text-gray-800"
+                                    >
+                                      {subcat.name}
+                                    </Link>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <Link
+                              to={`/werkjes/combi/${item.slug}`}
                               onClick={() => setMobileMenuOpen(false)}
                               className="block px-3 py-1 text-xs text-gray-600 hover:text-gray-800"
                             >

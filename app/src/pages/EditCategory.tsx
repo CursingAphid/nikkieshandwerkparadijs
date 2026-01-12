@@ -26,7 +26,7 @@ function EditCategory() {
   const navigate = useNavigate()
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
-  const [type, setType] = useState<'haken' | 'borduren' | ''>('')
+  const [type, setType] = useState<'haken' | 'borduren' | 'combi' | ''>('')
   const [headimage, setHeadimage] = useState<File | null>(null)
   const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -47,25 +47,25 @@ function EditCategory() {
           apiFetch('/categories'),
           apiFetch('/headcategories')
         ])
-        
+
         const [categoriesJson, headcategoriesJson] = await Promise.all([
           categoriesRes.json(),
           headcategoriesRes.json()
         ])
-        
+
         if (!categoriesRes.ok) throw new Error(categoriesJson?.error || 'Failed to load categories')
         if (!headcategoriesRes.ok) throw new Error(headcategoriesJson?.error || 'Failed to load headcategories')
-        
+
         const category = categoriesJson.find((c: Category) => c.id === Number(id))
         if (!category) throw new Error('Category not found')
-        
+
         if (!cancelled) {
           setName(category.name)
           setDescription(category.description || '')
-          setType(category.type as 'haken' | 'borduren' || '')
+          setType(category.type as 'haken' | 'borduren' | 'combi' || '')
           setCurrentImageUrl(category.headimageurl)
           setHeadcategories(headcategoriesJson)
-          
+
           // Check if this category belongs to a headcategory
           if (category.headcategory_id) {
             setBelongsToHeadcategory(true)
@@ -96,23 +96,23 @@ function EditCategory() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
-    
+
     // Validation
     if (belongsToHeadcategory === null) {
       setError('Please select whether this category belongs to a head category')
       return
     }
-    
+
     if (belongsToHeadcategory && !headcategoryId) {
       setError('Please select a head category')
       return
     }
-    
+
     if (!belongsToHeadcategory && !type) {
-      setError('Please select a type (Haken or Borduren)')
+      setError('Please select a type (Haken, Borduren, or Combi)')
       return
     }
-    
+
     try {
       setSaving(true)
       const form = new FormData()
@@ -122,7 +122,7 @@ function EditCategory() {
       form.append('type', getFinalType())
       if (headimage) form.append('headimage', headimage)
       if (headcategoryId) form.append('headcategoryId', String(headcategoryId))
-      
+
       const res = await apiFetch(`/categories/${id}`, {
         method: 'PATCH',
         body: form
@@ -157,24 +157,24 @@ function EditCategory() {
   return (
     <div className="container">
       <h1 className="title">Edit Category</h1>
-      
+
       <div className="card" style={{ maxWidth: 640 }}>
         <form onSubmit={onSubmit}>
           <div style={{ display: 'grid', gap: 12 }}>
             <div>
               <label className="label">Name</label>
-              <input 
-                className="input" 
-                value={name} 
-                onChange={(e) => setName(e.target.value)} 
-                required 
+              <input
+                className="input"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
               />
             </div>
             <div>
               <label className="label">Slug (auto-generated)</label>
-              <input 
-                className="input bg-gray-100" 
-                value={slugFromName} 
+              <input
+                className="input bg-gray-100"
+                value={slugFromName}
                 readOnly
                 placeholder="Will be generated from name"
               />
@@ -214,9 +214,9 @@ function EditCategory() {
             {belongsToHeadcategory === true && (
               <div>
                 <label className="label">Head Category</label>
-                <select 
-                  className="input" 
-                  value={headcategoryId} 
+                <select
+                  className="input"
+                  value={headcategoryId}
                   onChange={(e) => setHeadcategoryId(e.target.value ? parseInt(e.target.value) : '')}
                   required
                 >
@@ -238,23 +238,24 @@ function EditCategory() {
             {belongsToHeadcategory === false && (
               <div>
                 <label className="label">Type</label>
-                <select 
-                  className="input" 
-                  value={type} 
-                  onChange={(e) => setType(e.target.value as 'haken' | 'borduren' | '')}
+                <select
+                  className="input"
+                  value={type}
+                  onChange={(e) => setType(e.target.value as 'haken' | 'borduren' | 'combi' | '')}
                   required
                 >
                   <option value="">Select type...</option>
                   <option value="haken">Haken</option>
                   <option value="borduren">Borduren</option>
+                  <option value="combi">Combi</option>
                 </select>
               </div>
             )}
             <div>
               <label className="label">Description</label>
-              <textarea 
-                className="input" 
-                value={description} 
+              <textarea
+                className="input"
+                value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
               />

@@ -25,6 +25,7 @@ import Over from './pages/Over.tsx'
 import Contact from './pages/Contact.tsx'
 import Haken from './pages/Haken.tsx'
 import Borduren from './pages/Borduren.tsx'
+import Combi from './pages/Combi.tsx'
 import RouteHandler from './components/RouteHandler.tsx'
 
 function ShellHeader() {
@@ -43,8 +44,9 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/build" element={<Build />} />
         <Route path="/over" element={<Over />} />
         <Route path="/contact" element={<Contact />} />
-            <Route path="/werkjes/haken" element={<Haken />} />
-            <Route path="/werkjes/borduren" element={<Borduren />} />
+        <Route path="/werkjes/haken" element={<Haken />} />
+        <Route path="/werkjes/borduren" element={<Borduren />} />
+        <Route path="/werkjes/combi" element={<Combi />} />
         <Route path="/werkjes/:type/:param1/:param2/:param3" element={<RouteHandler />} />
         <Route path="/werkjes/:type/:param1/:param2" element={<RouteHandler />} />
         <Route path="/werkjes/:type/:param1" element={<RouteHandler />} />
