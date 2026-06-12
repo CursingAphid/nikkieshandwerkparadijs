@@ -7,10 +7,31 @@ import multer from 'multer';
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 const app = express();
-// Middleware
-const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || undefined;
+// Middleware — FRONTEND_ORIGIN accepts one or more comma-separated origins
+const PRODUCTION_ORIGINS = [
+    'https://nikkieshandwerkparadijs.vercel.app',
+    'https://www.nikkieshandwerkparadijs.nl',
+    'https://nikkieshandwerkparadijs.nl',
+];
+function getAllowedOrigins() {
+    const fromEnv = (process.env.FRONTEND_ORIGIN || '')
+        .split(',')
+        .map((origin) => origin.trim())
+        .filter(Boolean);
+    if (process.env.NODE_ENV === 'production') {
+        return [...new Set([...fromEnv, ...PRODUCTION_ORIGINS])];
+    }
+    return fromEnv;
+}
+const allowedOrigins = getAllowedOrigins();
 app.use(cors({
-    origin: FRONTEND_ORIGIN || true, // allow configured origin or all in dev
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+            callback(null, true);
+            return;
+        }
+        callback(new Error(`Origin ${origin} not allowed by CORS`));
+    },
     credentials: true,
 }));
 app.use(express.json());
@@ -68,9 +89,11 @@ app.post('/api/admin/login', (req, res) => {
         return;
     }
     if (username === expectedUser && password === expectedPass) {
-        // Use SameSite=lax for better compatibility, especially in incognito mode
+        // In production/cross-site, cookies on XHR require SameSite=None; Secure must be true
         const isProd = process.env.NODE_ENV === 'production';
-        const sameSite = 'lax'; // Always use 'lax' for better compatibility
+        const requestOrigin = (req.headers.origin || '').toString();
+        const isLocalFrontend = /localhost|127\.0\.0\.1/i.test(requestOrigin);
+        const sameSite = (!isLocalFrontend && isProd) ? 'none' : 'lax';
         res.cookie('admin', '1', {
             httpOnly: true,
             sameSite,
@@ -109,6 +132,8 @@ app.post('/api/items', requireAdmin, upload.array('images', 50), async (req, res
             res.status(400).json({ error: 'Name is required' });
             return;
         }
+        const descriptionRaw = (req.body.description ?? '').toString().trim();
+        const description = descriptionRaw === '' ? null : descriptionRaw;
         const priceRaw = (req.body.price ?? '').toString().trim();
         const priceValue = priceRaw === '' ? null : Number(priceRaw);
         const price = priceValue !== null && Number.isFinite(priceValue) ? priceValue : null;
@@ -157,6 +182,7 @@ app.post('/api/items', requireAdmin, upload.array('images', 50), async (req, res
             .from('items')
             .insert({
             name: nameRaw,
+            description,
             price,
             images: urls.length ? urls : null,
             is_favorite: String(req.body.is_favorite || '').toLowerCase() === 'true'
@@ -197,9 +223,85 @@ app.get('/api/items', async (_req, res) => {
         const supabase = createClient(supabaseUrl, supabaseKey);
         const { data, error } = await supabase
             .from('items')
+            .select('*');
+        if (error) {
+            res.status(500).json({ error: error.message });
+            return;
+        }
+        // Sort: favorites first (ordered by order, then created_at), then featured, then all others
+        const sorted = (data || []).sort((a, b) => {
+            const aFav = a.is_favorite || false;
+            const bFav = b.is_favorite || false;
+            const aHakenFeatured = a.featured_haken || false;
+            const bHakenFeatured = b.featured_haken || false;
+            const aBordurenFeatured = a.featured_borduren || false;
+            const bBordurenFeatured = b.featured_borduren || false;
+            // Favorites group first
+            if (aFav && !bFav)
+                return -1;
+            if (!aFav && bFav)
+                return 1;
+            if (aFav && bFav) {
+                // Within favorites, sort by order, then created_at
+                if (a.order !== b.order)
+                    return a.order - b.order;
+                return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+            }
+            // Featured items next (for both haken and borduren)
+            const aFeatured = aHakenFeatured || aBordurenFeatured;
+            const bFeatured = bHakenFeatured || bBordurenFeatured;
+            if (aFeatured && !bFeatured)
+                return -1;
+            if (!aFeatured && bFeatured)
+                return 1;
+            // Within featured items, sort by featured_order (lower number = more recent)
+            if (aFeatured && bFeatured) {
+                const aOrder = a.featured_order_haken || a.featured_order_borduren || 999;
+                const bOrder = b.featured_order_haken || b.featured_order_borduren || 999;
+                if (aOrder !== bOrder)
+                    return aOrder - bOrder;
+            }
+            // For rest, sort by order then created_at
+            if (a.order !== b.order)
+                return a.order - b.order;
+            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        });
+        res.json(sorted);
+    }
+    catch (e) {
+        // eslint-disable-next-line no-console
+        console.error(e);
+        res.status(500).json({ error: 'List items failed' });
+    }
+});
+// Featured items for carousels by type (haken|borduren)
+app.get('/api/items/featured', async (req, res) => {
+    try {
+        const supabaseUrl = process.env.SUPABASE_URL;
+        const supabaseKey = process.env.SUPABASE_KEY;
+        if (!supabaseUrl || !supabaseKey) {
+            res.status(500).json({ error: 'Supabase env vars not configured' });
+            return;
+        }
+        const type = String(req.query.type || '').toLowerCase();
+        if (type !== 'haken' && type !== 'borduren' && type !== 'combi') {
+            res.status(400).json({ error: 'Invalid type. Use haken, borduren or combi' });
+            return;
+        }
+        const supabase = createClient(supabaseUrl, supabaseKey);
+        // For Combi, we don't have featured columns yet, so return empty to let frontend fallback to latest items
+        if (type === 'combi') {
+            res.json([]);
+            return;
+        }
+        const featuredColumn = type === 'haken' ? 'featured_haken' : 'featured_borduren';
+        const orderColumn = type === 'haken' ? 'featured_order_haken' : 'featured_order_borduren';
+        const { data, error } = await supabase
+            .from('items')
             .select('*')
-            .order('order', { ascending: true })
-            .order('created_at', { ascending: false });
+            .filter(featuredColumn, 'eq', true)
+            .order(orderColumn, { ascending: true })
+            .limit(10);
         if (error) {
             res.status(500).json({ error: error.message });
             return;
@@ -209,7 +311,7 @@ app.get('/api/items', async (_req, res) => {
     catch (e) {
         // eslint-disable-next-line no-console
         console.error(e);
-        res.status(500).json({ error: 'List items failed' });
+        res.status(500).json({ error: 'List featured items failed' });
     }
 });
 // Bulk update item orders (MUST be before /api/items/:id route)
@@ -325,6 +427,8 @@ app.patch('/api/items/:id', requireAdmin, upload.array('images', 25), async (req
             res.status(400).json({ error: 'Name is required' });
             return;
         }
+        const descriptionRaw = (req.body.description ?? existing.description ?? '').toString().trim();
+        const description = descriptionRaw === '' ? null : descriptionRaw;
         const priceRaw = (req.body.price ?? (existing.price ?? '')).toString().trim();
         const priceValue = priceRaw === '' ? null : Number(priceRaw);
         const price = priceValue !== null && Number.isFinite(priceValue) ? priceValue : null;
@@ -371,13 +475,105 @@ app.patch('/api/items/:id', requireAdmin, upload.array('images', 25), async (req
         const mergedImages = Array.isArray(existing.images)
             ? [...existing.images, ...newUrls]
             : (newUrls.length ? newUrls : null);
+        // Handle reordered existing images
+        let finalImages = mergedImages;
+        if (req.body.existingImagesOrder) {
+            try {
+                const reorderedExisting = JSON.parse(req.body.existingImagesOrder);
+                if (Array.isArray(reorderedExisting)) {
+                    // Combine reordered existing images with new images
+                    finalImages = [...reorderedExisting, ...newUrls];
+                }
+            }
+            catch (e) {
+                // If parsing fails, use the original merged images
+                console.warn('Failed to parse existingImagesOrder:', e);
+            }
+        }
         const updatePayload = {
             name: nameRaw,
+            description,
             price,
-            images: mergedImages,
+            images: finalImages,
         };
         if (typeof req.body.is_favorite !== 'undefined') {
             updatePayload.is_favorite = String(req.body.is_favorite).toLowerCase() === 'true';
+        }
+        // Optional featured flags
+        const parseBool = (v) => String(v).toLowerCase() === 'true';
+        const wantFeaturedHaken = typeof req.body.featured_haken !== 'undefined' ? parseBool(req.body.featured_haken) : undefined;
+        const wantFeaturedBorduren = typeof req.body.featured_borduren !== 'undefined' ? parseBool(req.body.featured_borduren) : undefined;
+        if (typeof wantFeaturedHaken === 'boolean' || typeof wantFeaturedBorduren === 'boolean') {
+            // Enforce max 10 per type when enabling and set selection order
+            const supabaseForCount = createClient(supabaseUrl, supabaseKey);
+            if (wantFeaturedHaken === true) {
+                const { count } = await supabaseForCount
+                    .from('items')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('featured_haken', true);
+                if ((count || 0) >= 10 && !existing.featured_haken) {
+                    res.status(400).json({ error: 'Maximaal 10 uitgelichte items toegestaan voor Haken' });
+                    return;
+                }
+                // Only set new order if this item wasn't already featured
+                if (!existing.featured_haken) {
+                    // Get all current featured items and their orders
+                    const { data: currentFeatured } = await supabaseForCount
+                        .from('items')
+                        .select('id, featured_order_haken')
+                        .eq('featured_haken', true);
+                    // Increment all existing orders by 1
+                    if (currentFeatured && currentFeatured.length > 0) {
+                        const updates = currentFeatured.map((item) => supabaseForCount
+                            .from('items')
+                            .update({ featured_order_haken: (item.featured_order_haken || 0) + 1 })
+                            .eq('id', item.id));
+                        await Promise.all(updates);
+                    }
+                    // Set this item to order 1 (shows first in carousel)
+                    updatePayload.featured_order_haken = 1;
+                }
+                // If already featured, keep existing order
+            }
+            else if (wantFeaturedHaken === false) {
+                updatePayload.featured_order_haken = null;
+            }
+            if (typeof wantFeaturedHaken === 'boolean')
+                updatePayload.featured_haken = wantFeaturedHaken;
+            if (wantFeaturedBorduren === true) {
+                const { count } = await supabaseForCount
+                    .from('items')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('featured_borduren', true);
+                if ((count || 0) >= 10 && !existing.featured_borduren) {
+                    res.status(400).json({ error: 'Maximaal 10 uitgelichte items toegestaan voor Borduren' });
+                    return;
+                }
+                // Only set new order if this item wasn't already featured
+                if (!existing.featured_borduren) {
+                    // Get all current featured items and their orders
+                    const { data: currentFeatured } = await supabaseForCount
+                        .from('items')
+                        .select('id, featured_order_borduren')
+                        .eq('featured_borduren', true);
+                    // Increment all existing orders by 1
+                    if (currentFeatured && currentFeatured.length > 0) {
+                        const updates = currentFeatured.map((item) => supabaseForCount
+                            .from('items')
+                            .update({ featured_order_borduren: (item.featured_order_borduren || 0) + 1 })
+                            .eq('id', item.id));
+                        await Promise.all(updates);
+                    }
+                    // Set this item to order 1 (shows first in carousel)
+                    updatePayload.featured_order_borduren = 1;
+                }
+                // If already featured, keep existing order
+            }
+            else if (wantFeaturedBorduren === false) {
+                updatePayload.featured_order_borduren = null;
+            }
+            if (typeof wantFeaturedBorduren === 'boolean')
+                updatePayload.featured_borduren = wantFeaturedBorduren;
         }
         const { data, error } = await supabase
             .from('items')
@@ -622,6 +818,24 @@ app.delete('/api/categories/:id/headimage', requireAdmin, async (req, res) => {
         res.status(500).json({ error: 'Delete head image failed' });
     }
 });
+// Delete category
+app.delete('/api/categories/:id', requireAdmin, async (req, res) => {
+    try {
+        const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+        // Delete category
+        const { error } = await supabase.from('categories').delete().eq('id', req.params.id);
+        if (error) {
+            res.status(500).json({ error: error.message });
+            return;
+        }
+        res.json({ success: true });
+    }
+    catch (e) {
+        // eslint-disable-next-line no-console
+        console.error(e);
+        res.status(500).json({ error: 'Delete category failed' });
+    }
+});
 // Items in a category
 app.get('/api/categories/:id/items', async (req, res) => {
     try {
@@ -696,6 +910,26 @@ app.patch('/api/items/:id/order', requireAdmin, async (req, res) => {
         // eslint-disable-next-line no-console
         console.error(e);
         res.status(500).json({ error: 'Update item order failed' });
+    }
+});
+// Delete item
+app.delete('/api/items/:id', requireAdmin, async (req, res) => {
+    try {
+        const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+        // First, delete item_category links
+        await supabase.from('item_categories').delete().eq('item_id', req.params.id);
+        // Then delete the item
+        const { error } = await supabase.from('items').delete().eq('id', req.params.id);
+        if (error) {
+            res.status(500).json({ error: error.message });
+            return;
+        }
+        res.json({ success: true });
+    }
+    catch (e) {
+        // eslint-disable-next-line no-console
+        console.error(e);
+        res.status(500).json({ error: 'Delete item failed' });
     }
 });
 // --- Headcategories ---

@@ -9,10 +9,34 @@ import crypto from 'crypto';
 
 const app = express();
 
-// Middleware
-const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || undefined;
+// Middleware — FRONTEND_ORIGIN accepts one or more comma-separated origins
+const PRODUCTION_ORIGINS = [
+  'https://nikkieshandwerkparadijs.vercel.app',
+  'https://www.nikkieshandwerkparadijs.nl',
+  'https://nikkieshandwerkparadijs.nl',
+];
+
+function getAllowedOrigins(): string[] {
+  const fromEnv = (process.env.FRONTEND_ORIGIN || '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+  if (process.env.NODE_ENV === 'production') {
+    return [...new Set([...fromEnv, ...PRODUCTION_ORIGINS])];
+  }
+  return fromEnv;
+}
+
+const allowedOrigins = getAllowedOrigins();
+
 app.use(cors({
-  origin: FRONTEND_ORIGIN || true, // allow configured origin or all in dev
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+      callback(null, true);
+      return;
+    }
+    callback(new Error(`Origin ${origin} not allowed by CORS`));
+  },
   credentials: true,
 }));
 app.use(express.json());
@@ -75,8 +99,8 @@ app.post('/api/admin/login', (req, res) => {
   if (username === expectedUser && password === expectedPass) {
     // In production/cross-site, cookies on XHR require SameSite=None; Secure must be true
     const isProd = process.env.NODE_ENV === 'production';
-    const frontendOrigin = process.env.FRONTEND_ORIGIN || '';
-    const isLocalFrontend = /localhost|127\.0\.0\.1/i.test(frontendOrigin);
+    const requestOrigin = (req.headers.origin || '').toString();
+    const isLocalFrontend = /localhost|127\.0\.0\.1/i.test(requestOrigin);
     const sameSite: 'lax' | 'none' = (!isLocalFrontend && isProd) ? 'none' : 'lax';
 
     res.cookie('admin', '1', {
